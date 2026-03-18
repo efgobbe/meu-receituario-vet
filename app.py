@@ -15,57 +15,67 @@ CPF_VET = "CPF: 272.814.978-06"
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
 st.title("📋 Gerador de Receituário Profissional")
 
-# Inicializa a lista de medicamentos na memória do navegador
+# Inicializa a lista de medicamentos na memória
 if 'lista_medicamentos' not in st.session_state:
     st.session_state.lista_medicamentos = []
 
-# --- FORMULÁRIO DE IDENTIFICAÇÃO ---
+# --- 1. IDENTIFICAÇÃO DO PACIENTE ---
 with st.expander("1. Identificação do Paciente", expanded=True):
     col1, col2 = st.columns(2)
     with col1:
         paciente = st.text_input("Nome do Animal")
-        especie = st.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Outra"])
+        especie = st.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Ave", "Outra"])
     with col2:
         proprietario = st.text_input("Proprietário/Tutor")
         data_hoje = date.today().strftime("%d/%m/%Y")
 
-# --- SEÇÃO DE PRESCRIÇÃO DINÂMICA ---
-with st.expander("2. Adicionar Medicamentos", expanded=True):
+# --- 2. SEÇÃO DE PRESCRIÇÃO DETALHADA ---
+with st.expander("2. Adicionar Itens à Prescrição", expanded=True):
     col_via, col_med = st.columns([1, 2])
     with col_via:
-        via = st.selectbox("Via de Uso", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
-    with col_med:
-        detalhes = st.text_area("Medicamento, Dose e Instruções", placeholder="Ex: Simparic 20mg - Dar 1 comprimido...")
+        via = st.selectbox("Via de Uso", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável", "Uso Retal", "Uso Inalatório"])
     
-    if st.button("➕ Adicionar à Receita"):
-        if detalhes:
-            item = f"({via}) \n{detalhes}"
-            st.session_state.lista_medicamentos.append(item)
-            st.success("Item adicionado!")
+    with col_med:
+        medicamento = st.text_input("Nome do Medicamento / Fármaco", placeholder="Ex: Simparic 20mg")
+    
+    # Campo separado para doses e instruções
+    instrucoes = st.text_area("Dose e Instruções de Uso", placeholder="Ex: Administrar 1 comprimido, por via oral, a cada 30 dias.")
+    
+    if st.button("➕ Adicionar Medicamento"):
+        if medicamento and instrucoes:
+            # Organiza o texto que vai para a lista
+            item_formatado = {
+                "via": via,
+                "nome": medicamento,
+                "dose": instrucoes
+            }
+            st.session_state.lista_medicamentos.append(item_formatado)
+            st.success(f"{medicamento} adicionado com sucesso!")
         else:
-            st.warning("Preencha os detalhes do medicamento.")
+            st.error("Por favor, preencha o nome do medicamento e as instruções.")
 
-# Exibe o que já foi adicionado
+# Exibição da Lista Atual
 if st.session_state.lista_medicamentos:
     st.write("---")
-    st.write("**Itens na Receita:**")
-    for i, m in enumerate(st.session_state.lista_medicamentos):
-        st.text(f"{i+1}. {m}")
-    if st.button("🗑️ Limpar Lista"):
+    st.subheader("Itens Confirmados:")
+    for i, item in enumerate(st.session_state.lista_medicamentos):
+        st.markdown(f"**{i+1}. {item['nome']}** ({item['via']})")
+        st.caption(f"Instruções: {item['dose']}")
+    
+    if st.button("🗑️ Limpar Toda a Lista"):
         st.session_state.lista_medicamentos = []
         st.rerun()
 
-# --- GERAÇÃO DO PDF ---
-if st.button("🚀 Gerar e Baixar Receituário PDF"):
+# --- 3. GERAÇÃO DO PDF ---
+if st.button("🚀 Gerar Receituário PDF"):
     if not st.session_state.lista_medicamentos:
-        st.error("Adicione pelo menos um medicamento antes de gerar.")
+        st.warning("A lista de medicamentos está vazia.")
     else:
         pdf = FPDF()
         pdf.add_page()
-        
         y_inicial = pdf.get_y()
         
-        # Logotipo
+        # Logotipo (se existir no GitHub)
         if os.path.exists("logo.png"):
             try:
                 pdf.image("logo.png", 10, y_inicial - 5, w=25) 
@@ -91,17 +101,21 @@ if st.button("🚀 Gerar e Baixar Receituário PDF"):
         pdf.cell(0, 7, txt=f"Paciente: {paciente}   |   Especie: {especie}", ln=True)
         pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
         
-        # Prescrições acumuladas
+        # Prescrições
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
-        pdf.set_font("Arial", '', 11)
         
         for item in st.session_state.lista_medicamentos:
-            pdf.multi_cell(0, 7, txt=item)
+            # Nome do Medicamento em Negrito
+            pdf.set_font("Arial", 'B', 11)
+            pdf.cell(0, 7, txt=f"{item['nome']} ({item['via']})", ln=True)
+            # Instruções em fonte normal
+            pdf.set_font("Arial", '', 11)
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item['dose']}")
             pdf.ln(3)
         
-        # Assinatura
+        # Assinatura (Centralizada)
         pdf.ln(15)
         pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
         pdf.ln(5)
@@ -109,30 +123,4 @@ if st.button("🚀 Gerar e Baixar Receituário PDF"):
         pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
         pdf.set_font("Arial", '', 9)
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
-        pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
-
-        # Rodapé Técnico em Colunas
-        pdf.ln(10)
-        y_rodape = pdf.get_y()
-        # Coluna Esquerda
-        pdf.set_xy(10, y_rodape)
-        pdf.set_font("Arial", 'B', 8)
-        pdf.cell(95, 5, txt="IDENTIFICAÇÃO DO COMPRADOR", ln=True, align='C')
-        pdf.set_font("Arial", '', 7)
-        pdf.set_x(10)
-        pdf.cell(95, 4, txt="Nome: ____________________________________", ln=True, align='C')
-        pdf.set_x(10)
-        pdf.cell(95, 4, txt="Ident.: _______________ Org. Em: ___________", ln=True, align='C')
-        pdf.set_x(10)
-        pdf.cell(95, 4, txt="End: _____________________________________", ln=True, align='C')
-        # Coluna Direita
-        pdf.set_xy(105, y_rodape)
-        pdf.set_font("Arial", 'B', 8)
-        pdf.cell(95, 5, txt="IDENTIFICAÇÃO DO FORNECEDOR", ln=True, align='C')
-        pdf.set_xy(105, y_rodape + 8)
-        pdf.cell(95, 4, txt="____________________________________", ln=True, align='C')
-        pdf.set_x(105)
-        pdf.cell(95, 4, txt="Assinatura do Farmacêutico", ln=True, align='C')
-
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf")
+        pdf.cell(0, 5,
