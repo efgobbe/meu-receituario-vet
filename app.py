@@ -14,6 +14,7 @@ CPF_VET = "CPF: 272.814.978-06"
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
 st.title("📋 Gerador de Receituário")
 
+# Inicializa a lista de medicamentos com nomes claros
 if 'lista_meds' not in st.session_state:
     st.session_state.lista_meds = []
 
@@ -31,26 +32,31 @@ with st.expander("1. Identificação do Paciente", expanded=True):
 with st.expander("2. Adicionar Medicamentos", expanded=True):
     with st.form("form_med", clear_on_submit=True):
         c_via, c_med = st.columns([1, 2])
-        v_in = c_via.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
-        m_in = c_med.text_input("Medicamento")
+        via_in = c_via.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
+        med_in = c_med.text_input("Medicamento")
         
         c_qtd, c_un, _ = st.columns([1, 1, 2])
-        q_list = list(range(1, 11))
-        q_in = c_qtd.selectbox("Qtd.", q_list)
-        u_in = c_un.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
+        qtd_in = c_qtd.selectbox("Qtd.", list(range(1, 11)))
+        un_in = c_un.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
         
-        i_in = st.text_area("Instruções")
+        inst_in = st.text_area("Instruções")
         
         if st.form_submit_button("➕ Adicionar à Lista"):
-            if m_in and i_in:
+            if med_in and inst_in:
+                # Salvando com nomes completos para evitar erro de chave
                 st.session_state.lista_meds.append({
-                    "v": v_in, "n": m_in, "i": i_in, "q": q_in, "u": u_in
+                    "nome": med_in,
+                    "qtd": qtd_in,
+                    "unidade": un_in,
+                    "via": via_in,
+                    "instrucoes": inst_in
                 })
-                st.success("Adicionado com sucesso!")
+                st.success("Adicionado!")
             else:
-                st.error("Preencha o nome e as instruções.")
+                st.error("Preencha o medicamento e instruções.")
 
 if st.session_state.lista_meds:
+    st.write("---")
     if st.button("🗑️ Limpar Toda a Lista"):
         st.session_state.lista_meds = []
         st.rerun()
@@ -74,19 +80,13 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.set_xy(40, y_topo)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
-        
         pdf.set_font("Arial", '', 10)
         pdf.set_x(40)
         pdf.cell(0, 6, txt=TITULO, ln=True, align='L')
-        
         pdf.set_x(40)
-        txt_end = f"{ENDERECO} - {CIDADE_ESTADO}"
-        pdf.cell(0, 5, txt=txt_end, ln=True, align='L')
-        
+        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
         pdf.set_x(40)
         pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
-        
-        # Linha
         pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
         
         # Dados Paciente
@@ -103,11 +103,11 @@ if st.button("🚀 Gerar e Baixar PDF"):
         
         for item in st.session_state.lista_meds:
             pdf.set_font("Arial", 'B', 11)
-            linha_m = f"{item['n']} --- {item['q']} {item['u']} ({item['v']})"
-            pdf.cell(0, 7, txt=linha_m, ln=True)
-            
+            # Montagem da linha com as chaves corretas
+            linha = f"{item['nome']} --- {item['qtd']} {item['unidade']} ({item['via']})"
+            pdf.cell(0, 7, txt=linha, ln=True)
             pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {item['i']}")
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item['instrucoes']}")
             pdf.ln(3)
         
         # Assinatura
@@ -117,15 +117,12 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
         pdf.set_font("Arial", '', 9)
-        txt_sub = f"{TITULO} - {REGISTRO}"
-        pdf.cell(0, 5, txt=txt_sub, ln=True, align='C')
+        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
         # Rodapé
         pdf.ln(10)
         yr = pdf.get_y()
-        
-        # Lado Esquerdo
         pdf.set_xy(10, yr)
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='C')
@@ -137,7 +134,6 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.set_x(10)
         pdf.cell(95, 5, txt="Cidade: _________ UF: ___ Tel: ____", ln=True, align='C')
         
-        # Lado Direito
         pdf.set_xy(105, yr)
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=True, align='C')
@@ -146,11 +142,5 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.set_x(105)
         pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
 
-        # Download
-        pdf_out = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(
-            label="📥 Baixar PDF Final",
-            data=pdf_out,
-            file_name=f"receita_{paciente}.pdf",
-            mime="application/pdf"
-        )
+        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
