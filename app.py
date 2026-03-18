@@ -3,14 +3,14 @@ from fpdf import FPDF
 from datetime import date
 
 # --- DADOS FIXOS DO DR. ELIÉSER ---
-NOME_VET = "Dr. Eliéser Ferreira Gobbe"
-TITULO = "Médico Veterinário"
-REGISTRO = "CRMV-SC 2754"
-ENDERECO = "Rua Isidoro Schilickmann, 93 - Santa Augusta"
-CIDADE_ESTADO = "Braço do Norte - SC"
-CPF_VET = "CPF: 272.814.978-06"
+NOME_VET = "Dr. Eliéser Ferreira Gobbe" [cite: 3, 11]
+TITULO = "Médico Veterinário" [cite: 4, 12]
+REGISTRO = "CRMV-SC 2754" [cite: 13, 14]
+ENDERECO = "Rua Isidoro Schilickmann, 93-Santa Augusta" [cite: 5]
+CIDADE_ESTADO = "Braço do Norte - SC" [cite: 6]
+CPF_VET = "CPF: 272.814.978-06" [cite: 7]
 
-# --- INTERFACE ---
+# --- INTERFACE STREAMLIT ---
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
 st.title("📋 Gerador de Receituário")
 
@@ -32,7 +32,7 @@ if btn_gerar:
     pdf = FPDF()
     pdf.add_page()
     
-    # Cabeçalho
+    # Cabeçalho Centralizado
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 8, txt=NOME_VET, ln=True, align='C')
     pdf.set_font("Arial", '', 10)
@@ -41,12 +41,14 @@ if btn_gerar:
     pdf.cell(0, 5, txt=CPF_VET, ln=True, align='C')
     pdf.line(10, 42, 200, 42) 
     
+    # Dados do Atendimento
     pdf.ln(10)
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
     pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
     pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
     
+    # Prescrição
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
@@ -62,30 +64,26 @@ if btn_gerar:
     pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
     pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-    # --- RODAPÉ TÉCNICO FIXO ---
+    # --- SEÇÃO: IDENTIFICAÇÃO DO COMPRADOR (CENTRALIZADA) ---
+    pdf.ln(15)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 6, txt="Identificação do Comprador", ln=True, align='C') [cite: 15]
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(0, 7, txt="Nome: __________________________________________________________________", ln=True, align='C') [cite: 17]
+    pdf.cell(0, 7, txt="Ident.: _________________________ Org. Em: _______________________________", ln=True, align='C') [cite: 18, 19]
+    pdf.cell(0, 7, txt="End: ___________________________________________________________________", ln=True, align='C') [cite: 20]
+    pdf.cell(0, 7, txt="Cidade: __________________________ UF: ___________ Tel: ___________________", ln=True, align='C')
+    
+    # --- SEÇÃO: IDENTIFICAÇÃO DO FORNECEDOR (CENTRALIZADA) ---
     pdf.ln(10)
-    pdf.set_draw_color(200, 200, 200) # Cor da linha mais clara
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y()) 
-    pdf.ln(2)
-    
-    pdf.set_font("Arial", 'B', 8)
-    pdf.cell(110, 5, txt="IDENTIFICAÇÃO DO COMPRADOR", border=0)
-    pdf.cell(0, 5, txt="IDENTIFICAÇÃO DO FORNECEDOR", ln=True)
-    
-    pdf.set_font("Arial", '', 8)
-    pdf.cell(110, 5, txt="Nome: _______________________________________", border=0)
-    pdf.cell(0, 5, txt="____________________________________________", ln=True)
-    
-    pdf.cell(110, 5, txt="Ident.: ____________________ Org. Em: ________", border=0)
-    pdf.cell(0, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
-    
-    pdf.cell(110, 5, txt="End: ________________________________________", border=0)
-    pdf.cell(0, 5, txt="Data: ____/____/______", ln=True, align='C')
-    
-    pdf.cell(110, 5, txt="Cidade: _____________________ UF: ___________", border=0)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 6, txt="Identificação do Fornecedor", ln=True, align='C') [cite: 16]
     pdf.ln(5)
-    pdf.cell(110, 5, txt="Tel: ________________________", border=0)
+    pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(0, 7, txt="Assinatura do Farmacêutico", ln=True, align='C') [cite: 21]
+    pdf.cell(0, 7, txt="Data: ____ / ____ / ________", ln=True, align='C')
 
-    # Download
+    # Botão de Download
     pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-    st.download_button(label="📥 Baixar PDF", data=pdf_bytes, file_name=f"receita_{paciente}.pdf")
+    st.download_button(label="📥 Baixar Receituário PDF", data=pdf_bytes, file_name=f"receita_{paciente}.pdf")
