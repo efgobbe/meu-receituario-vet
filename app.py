@@ -41,7 +41,9 @@ if btn_gerar:
     if os.path.exists("logo.png"):
         # pdf.image(nome_arquivo, x, y, largura, altura)
         # x=10 (margem esquerda), y=y_inicial, largura=25 (mm)
-        pdf.image("logo.png", 10, y_inicial - 5, 25) 
+       # Procure esta linha e substitua por esta:
+    if os.path.exists("logo.png"):
+        pdf.image("logo.png", 10, y_inicial - 5, w=25) # Adicionei o 'w=' para evitar conflitos de formato
     else:
         # Se não encontrar a imagem, avisa o usuário no Streamlit
         st.warning("⚠️ Arquivo 'logo.png' não encontrado no repositório. O PDF será gerado sem o logotipo.")
