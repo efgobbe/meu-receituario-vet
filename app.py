@@ -3,7 +3,7 @@ from fpdf import FPDF
 from datetime import date
 import os
 
-# --- DADOS FIXOS ---
+# --- DADOS DO VETERINÁRIO ---
 NOME_VET = "Dr. Eliéser Ferreira Gobbe"
 TITULO = "Médico Veterinário"
 REGISTRO = "CRMV-SC 2754"
@@ -24,6 +24,7 @@ with st.expander("1. Identificação do Paciente", expanded=True):
     with c1:
         paciente = st.text_input("Nome do Animal")
         especie = st.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Outra"])
+        peso = st.text_input("Peso (kg)", placeholder="Ex: 10.5")
     with c2:
         proprietario = st.text_input("Proprietário/Tutor")
         data_hoje = date.today().strftime("%d/%m/%Y")
@@ -44,17 +45,16 @@ with st.expander("2. Adicionar Itens", expanded=True):
     
     instrucoes = st.text_area("Instruções")
     
-    if st.button("➕ Adicionar"):
+    if st.button("➕ Adicionar Medicamento"):
         if medicamento and instrucoes:
             st.session_state.lista_medicamentos.append({
                 "via": via, "nome": medicamento, "dose": instrucoes, "qtd": qtd, "un": un
             })
             st.success("Adicionado!")
         else:
-            st.error("Preencha todos os campos.")
+            st.error("Preencha o nome e as instruções.")
 
 if st.session_state.lista_medicamentos:
-    st.write("---")
     if st.button("🗑️ Limpar Lista"):
         st.session_state.lista_medicamentos = []
         st.rerun()
@@ -62,21 +62,19 @@ if st.session_state.lista_medicamentos:
 # --- 3. PDF ---
 if st.button("🚀 Gerar Receituário PDF"):
     if not st.session_state.lista_medicamentos:
-        st.warning("Lista vazia.")
+        st.warning("Adicione itens à lista primeiro.")
     else:
         pdf = FPDF()
         pdf.add_page()
-        y_pos = pdf.get_y()
+        y_at = pdf.get_y()
         
         # Logo
         if os.path.exists("logo.png"):
-            try:
-                pdf.image("logo.png", 10, y_pos - 5, w=25)
-            except:
-                pass
+            try: pdf.image("logo.png", 10, y_at - 5, w=25)
+            except: pass
 
         # Cabeçalho
-        pdf.set_xy(40, y_pos)
+        pdf.set_xy(40, y_at)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
         pdf.set_font("Arial", '', 10)
@@ -86,20 +84,57 @@ if st.button("🚀 Gerar Receituário PDF"):
         pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
         pdf.set_x(40)
         pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
-        
-        # Linha Divisória (Corrigida)
         pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
         
-        # Dados do Paciente
+        # Dados do Atendimento
         pdf.ln(15)
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=f"Paciente: {paciente}   |   Especie: {especie}", ln=True)
+        pdf.cell(0, 7, txt=f"Paciente: {paciente} ({especie}) - Peso: {peso}kg", ln=True)
         pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
         
-        # Prescrição
+        # Lista de Prescrição
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
         
         for item in st.session_state.lista_medicamentos:
-            pdf.set_font("Arial", 'B', 1
+            pdf.set_font("Arial", 'B', 11)
+            pdf.cell(0, 7, txt=f"{item['nome']} --- {item['qtd']} {item['un']} ({item['via']})", ln=True)
+            pdf.set_font("Arial", '', 11)
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item['dose']}")
+            pdf.ln(3)
+        
+        # Assinatura
+        pdf.ln(15)
+        pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
+        pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
+
+        # Rodapé Técnico
+        pdf.ln(10)
+        yr = pdf.get_y()
+        # Esquerda - Comprador
+        pdf.set_xy(10, yr)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(95, 5, txt="IDENTIFICAÇÃO DO COMPRADOR", ln=True, align='C')
+        pdf.set_font("Arial", '', 7)
+        pdf.set_x(10)
+        pdf.cell(95, 4, txt="Nome: ____________________________________", ln=True, align='C')
+        pdf.set_x(10)
+        pdf.cell(95, 4, txt="End: _____________________________________", ln=True, align='C')
+        # Direita - Fornecedor
+        pdf.set_xy(105, yr)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(95, 5, txt="IDENTIFICAÇÃO DO FORNECEDOR", ln=True, align='C')
+        pdf.set_xy(105, yr + 8)
+        pdf.cell(95, 4, txt="____________________________________", ln=True, align='C')
+        pdf.set_x(105)
+        pdf.cell(95, 4, txt="Assinatura do Farmacêutico", ln=True, align='C')
+
+        # Saída do PDF
+        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
