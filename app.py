@@ -119,33 +119,14 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # Rodapé Técnico Ajustado
+        # Rodapé Justificado
         pdf.ln(10)
         yr = pdf.get_y()
         
-        # Identificação do Comprador
+        # Lado Esquerdo - Comprador (Justificado)
         pdf.set_xy(10, yr)
         pdf.set_font("Arial", 'B', 9)
-        pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='C')
+        pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='L')
         pdf.set_font("Arial", '', 8)
-        pdf.set_x(10)
-        pdf.cell(95, 5, txt="Nome: ________________________________", ln=True, align='C')
-        pdf.set_x(10)
-        pdf.cell(95, 5, txt="End: _________________________________", ln=True, align='C')
-        pdf.set_x(10)
-        # Espaçamento aumentado para Cidade, UF e Tel
-        pdf.cell(95, 5, txt="Cidade: ______________ UF: ____ Tel: ________", ln=True, align='C')
-        pdf.set_x(10)
-        pdf.cell(95, 5, txt="CPF: _________________________________", ln=True, align='C')
         
-        # Identificação do Fornecedor
-        pdf.set_xy(105, yr)
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=True, align='C')
-        pdf.set_xy(105, yr + 10)
-        pdf.cell(95, 5, txt="________________________________", ln=True, align='C')
-        pdf.set_x(105)
-        pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
-
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
+        # Linhas com preenchimento calculado para al
