@@ -54,6 +54,7 @@ with st.expander("2. Adicionar Itens", expanded=True):
             st.error("Preencha todos os campos.")
 
 if st.session_state.lista_medicamentos:
+    st.write("---")
     if st.button("🗑️ Limpar Lista"):
         st.session_state.lista_medicamentos = []
         st.rerun()
@@ -65,13 +66,17 @@ if st.button("🚀 Gerar Receituário PDF"):
     else:
         pdf = FPDF()
         pdf.add_page()
-        y = pdf.get_y()
+        y_pos = pdf.get_y()
         
+        # Logo
         if os.path.exists("logo.png"):
-            try: pdf.image("logo.png", 10, y - 5, w=25)
-            except: pass
+            try:
+                pdf.image("logo.png", 10, y_pos - 5, w=25)
+            except:
+                pass
 
-        pdf.set_xy(40, y)
+        # Cabeçalho
+        pdf.set_xy(40, y_pos)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
         pdf.set_font("Arial", '', 10)
@@ -81,4 +86,20 @@ if st.button("🚀 Gerar Receituário PDF"):
         pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
         pdf.set_x(40)
         pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
-        pdf.line(10, pdf.get_y() + 5
+        
+        # Linha Divisória (Corrigida)
+        pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
+        
+        # Dados do Paciente
+        pdf.ln(15)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 7, txt=f"Paciente: {paciente}   |   Especie: {especie}", ln=True)
+        pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
+        
+        # Prescrição
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
+        
+        for item in st.session_state.lista_medicamentos:
+            pdf.set_font("Arial", 'B', 1
