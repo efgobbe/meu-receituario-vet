@@ -14,7 +14,6 @@ CPF_VET = "CPF: 272.814.978-06"
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
 st.title("📋 Gerador de Receituário")
 
-# Inicializa a lista de medicamentos
 if 'lista_meds' not in st.session_state:
     st.session_state.lista_meds = []
 
@@ -99,7 +98,6 @@ if st.button("🚀 Gerar e Baixar PDF"):
         
         for item in st.session_state.lista_meds:
             pdf.set_font("Arial", 'B', 11)
-            # O .get() evita o erro de KeyError se a chave mudou
             n = item.get('nome', '')
             q = item.get('qtd', '')
             u = item.get('unidade', '')
@@ -121,19 +119,26 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
+        # Rodapé Técnico Ajustado
         pdf.ln(10)
         yr = pdf.get_y()
+        
+        # Identificação do Comprador
         pdf.set_xy(10, yr)
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='C')
         pdf.set_font("Arial", '', 8)
         pdf.set_x(10)
-        pdf.cell(95, 5, txt="Nome: ____________________________", ln=True, align='C')
+        pdf.cell(95, 5, txt="Nome: ________________________________", ln=True, align='C')
         pdf.set_x(10)
-        pdf.cell(95, 5, txt="End: _____________________________", ln=True, align='C')
+        pdf.cell(95, 5, txt="End: _________________________________", ln=True, align='C')
         pdf.set_x(10)
-        pdf.cell(95, 5, txt="Cidade: _________ UF: ___ Tel: ____", ln=True, align='C')
+        # Espaçamento aumentado para Cidade, UF e Tel
+        pdf.cell(95, 5, txt="Cidade: ______________ UF: ____ Tel: ________", ln=True, align='C')
+        pdf.set_x(10)
+        pdf.cell(95, 5, txt="CPF: _________________________________", ln=True, align='C')
         
+        # Identificação do Fornecedor
         pdf.set_xy(105, yr)
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=True, align='C')
