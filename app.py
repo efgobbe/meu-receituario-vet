@@ -14,7 +14,7 @@ CPF_VET = "CPF: 272.814.978-06"
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
 st.title("📋 Gerador de Receituário")
 
-# Inicializa a lista de medicamentos com nomes claros
+# Inicializa a lista de medicamentos
 if 'lista_meds' not in st.session_state:
     st.session_state.lista_meds = []
 
@@ -28,7 +28,7 @@ with st.expander("1. Identificação do Paciente", expanded=True):
         proprietario = st.text_input("Proprietário/Tutor")
         data_hoje = date.today().strftime("%d/%m/%Y")
 
-# --- 2. PRESCRIÇÃO (LIMPEZA AUTOMÁTICA) ---
+# --- 2. PRESCRIÇÃO (COM LIMPEZA AUTOMÁTICA) ---
 with st.expander("2. Adicionar Medicamentos", expanded=True):
     with st.form("form_med", clear_on_submit=True):
         c_via, c_med = st.columns([1, 2])
@@ -43,7 +43,6 @@ with st.expander("2. Adicionar Medicamentos", expanded=True):
         
         if st.form_submit_button("➕ Adicionar à Lista"):
             if med_in and inst_in:
-                # Salvando com nomes completos para evitar erro de chave
                 st.session_state.lista_meds.append({
                     "nome": med_in,
                     "qtd": qtd_in,
@@ -76,7 +75,6 @@ if st.button("🚀 Gerar e Baixar PDF"):
             except:
                 pass
 
-        # Cabeçalho
         pdf.set_xy(40, y_topo)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
@@ -89,28 +87,31 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
         pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
         
-        # Dados Paciente
         pdf.ln(15)
         pdf.set_font("Arial", 'B', 11)
         pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
         pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
         pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
         
-        # Prescrição
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
         
         for item in st.session_state.lista_meds:
             pdf.set_font("Arial", 'B', 11)
-            # Montagem da linha com as chaves corretas
-            linha = f"{item['nome']} --- {item['qtd']} {item['unidade']} ({item['via']})"
+            # O .get() evita o erro de KeyError se a chave mudou
+            n = item.get('nome', '')
+            q = item.get('qtd', '')
+            u = item.get('unidade', '')
+            v = item.get('via', '')
+            ins = item.get('instrucoes', '')
+            
+            linha = f"{n} --- {q} {u} ({v})"
             pdf.cell(0, 7, txt=linha, ln=True)
             pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {item['instrucoes']}")
+            pdf.multi_cell(0, 6, txt=f"Instruções: {ins}")
             pdf.ln(3)
         
-        # Assinatura
         pdf.ln(15)
         pdf.cell(0, 0, txt="_" * 42, ln=True, align='C')
         pdf.ln(5)
@@ -120,7 +121,6 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # Rodapé
         pdf.ln(10)
         yr = pdf.get_y()
         pdf.set_xy(10, yr)
