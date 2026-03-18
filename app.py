@@ -60,73 +60,78 @@ if st.session_state.lista_meds:
         st.rerun()
 
 # --- 3. GERAÇÃO DO PDF ---
-if st.button("🚀 Gerar e Baixar PDF"):
-    if not st.session_state.lista_meds:
-        st.warning("Adicione medicamentos primeiro.")
-    else:
-        pdf = FPDF()
-        pdf.add_page()
-        y_topo = pdf.get_y()
-        
-        if os.path.exists("logo.png"):
-            try:
-                pdf.image("logo.png", 10, y_topo - 5, w=25)
-            except:
-                pass
+# Mudança: Primeiro geramos os dados do PDF, depois exibimos o botão de baixar.
+if st.session_state.lista_meds:
+    st.write("### 3. Finalizar Documento")
+    
+    # Criar o objeto PDF
+    pdf = FPDF()
+    pdf.add_page()
+    y_topo = pdf.get_y()
+    
+    if os.path.exists("logo.png"):
+        try: pdf.image("logo.png", 10, y_topo - 5, w=25)
+        except: pass
 
-        pdf.set_xy(40, y_topo)
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
-        pdf.set_font("Arial", '', 10)
-        pdf.set_x(40)
-        pdf.cell(0, 6, txt=TITULO, ln=True, align='L')
-        pdf.set_x(40)
-        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
-        pdf.set_x(40)
-        pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
-        pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
-        
-        pdf.ln(15)
+    # Cabeçalho
+    pdf.set_xy(40, y_topo)
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
+    pdf.set_font("Arial", '', 10)
+    pdf.set_x(40)
+    pdf.cell(0, 6, txt=TITULO, ln=True, align='L')
+    pdf.set_x(40)
+    pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
+    pdf.set_x(40)
+    pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
+    pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
+    
+    pdf.ln(15)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
+    pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
+    pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
+    
+    for item in st.session_state.lista_meds:
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
-        pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
-        pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
-        
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
-        
-        for item in st.session_state.lista_meds:
-            pdf.set_font("Arial", 'B', 11)
-            n = item.get('nome', '')
-            q = item.get('qtd', '')
-            u = item.get('unidade', '')
-            v = item.get('via', '')
-            ins = item.get('instrucoes', '')
-            
-            linha = f"{n} --- {q} {u} ({v})"
-            pdf.cell(0, 7, txt=linha, ln=True)
-            pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {ins}")
-            pdf.ln(3)
-        
-        pdf.ln(15)
-        pdf.cell(0, 0, txt="_" * 42, ln=True, align='C')
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
-        pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
+        n = item.get('nome', '')
+        q = item.get('qtd', '')
+        u = item.get('unidade', '')
+        v = item.get('via', '')
+        ins = item.get('instrucoes', '')
+        linha = f"{n} --- {q} {u} ({v})"
+        pdf.cell(0, 7, txt=linha, ln=True)
+        pdf.set_font("Arial", '', 11)
+        pdf.multi_cell(0, 6, txt=f"Instruções: {ins}")
+        pdf.ln(3)
+    
+    pdf.ln(15)
+    pdf.cell(0, 0, txt="_" * 42, ln=True, align='C')
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
+    pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # Rodapé Justificado
-        pdf.ln(10)
-        yr = pdf.get_y()
-        
-        # Lado Esquerdo - Comprador (Justificado)
-        pdf.set_xy(10, yr)
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='L')
-        pdf.set_font("Arial", '', 8)
-        
-        # Linhas com preenchimento calculado para al
+    pdf.ln(10)
+    yr = pdf.get_y()
+    pdf.set_xy(10, yr)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 6, txt="Identificação do Comprador", ln=True, align='L')
+    pdf.set_font("Arial", '', 8)
+    pdf.set_x(10); pdf.cell(95, 5, txt="Nome: " + "_" * 78, ln=True, align='L')
+    pdf.set_x(10); pdf.cell(95, 5, txt="End: " + "_" * 81, ln=True, align='L')
+    pdf.set_x(10); pdf.cell(95, 5, txt="Cidade: " + "_" * 35 + " UF: " + "_" * 4 + " Tel: " + "_" * 19, ln=True, align='L')
+    pdf.set_x(10); pdf.cell(95, 5, txt="CPF: " + "_" * 81, ln=True, align='L')
+    
+    pdf.set_xy(105, yr)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=True, align='R')
+    pdf.set_xy(105, yr + 10)
+    pdf.cell(95, 5, txt="_" * 40, ln=True, align='R')
+    pdf.set_x(105); pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='R
