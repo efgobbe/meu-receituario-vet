@@ -5,11 +5,11 @@ import os
 
 # --- DADOS FIXOS DO DR. ELIÉSER ---
 NOME_VET = "Dr. Eliéser Ferreira Gobbe"
-TITULO = "Médico Veterinário" [cite: 4, 12]
-REGISTRO = "CRMV-SC 2754" [cite: 13, 14]
-ENDERECO = "Rua Isidoro Schilickmann, 93-Santa Augusta" [cite: 5]
-CIDADE_ESTADO = "Braço do Norte - SC" [cite: 6]
-CPF_VET = "CPF: 272.814.978-06" [cite: 7]
+TITULO = "Médico Veterinário"
+REGISTRO = "CRMV-SC 2754"
+ENDERECO = "Rua Isidoro Schilickmann, 93-Santa Augusta"
+CIDADE_ESTADO = "Braço do Norte - SC"
+CPF_VET = "CPF: 272.814.978-06"
 
 # --- INTERFACE ---
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
@@ -58,7 +58,7 @@ if btn_gerar:
     
     pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5) 
     
-    # Paciente
+    # Dados do Paciente
     pdf.ln(15)
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
@@ -72,35 +72,35 @@ if btn_gerar:
     pdf.set_font("Arial", '', 11)
     pdf.multi_cell(0, 7, txt=prescricao)
     
-    # Assinatura Veterinário - COM ESPAÇO AUMENTADO
-    pdf.ln(20) # Espaço antes da linha
+    # Assinatura Veterinário - COM ESPAÇO ENTRE LINHA E NOME
+    pdf.ln(20)
     pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
-    pdf.ln(4)  # ESTE É O ESPAÇO QUE VOCÊ PEDIU (entre a linha e o nome)
+    pdf.ln(5)  # Espaço de 5mm entre a linha e o seu nome
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C') [cite: 11]
+    pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
     pdf.set_font("Arial", '', 9)
-    pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C') [cite: 12, 13]
+    pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
     pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-    # Rodapé Técnico [cite: 15, 16]
+    # Rodapé Técnico em Colunas
     pdf.ln(10)
     y_rodape = pdf.get_y()
     
-    # Comprador [cite: 15]
+    # Coluna Esquerda: Comprador
     pdf.set_xy(10, y_rodape)
     pdf.set_font("Arial", 'B', 9)
     pdf.cell(95, 6, txt="Identificação do Comprador", ln=False, align='C')
     pdf.set_font("Arial", '', 8)
     pdf.set_xy(10, y_rodape + 6)
-    pdf.cell(95, 5, txt="Nome: ________________________________", ln=True, align='C') [cite: 17]
+    pdf.cell(95, 5, txt="Nome: ________________________________", ln=True, align='C')
     pdf.set_x(10)
-    pdf.cell(95, 5, txt="Ident.: ______________ Org. Em: ________", ln=True, align='C') [cite: 18, 19]
+    pdf.cell(95, 5, txt="Ident.: ______________ Org. Em: ________", ln=True, align='C')
     pdf.set_x(10)
-    pdf.cell(95, 5, txt="End: _________________________________", ln=True, align='C') [cite: 20]
+    pdf.cell(95, 5, txt="End: _________________________________", ln=True, align='C')
     pdf.set_x(10)
     pdf.cell(95, 5, txt="Cidade: ___________ UF: ___ Tel: ________", ln=True, align='C')
     
-    # Fornecedor [cite: 16]
+    # Coluna Direita: Fornecedor
     pdf.set_xy(105, y_rodape)
     pdf.set_font("Arial", 'B', 9)
     pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=False, align='C')
@@ -108,7 +108,7 @@ if btn_gerar:
     pdf.set_xy(105, y_rodape + 10)
     pdf.cell(95, 5, txt="________________________________", ln=True, align='C')
     pdf.set_x(105)
-    pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='C') [cite: 21]
+    pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
     pdf.set_x(105)
     pdf.cell(95, 5, txt="Data: ____ / ____ / ________", ln=True, align='C')
 
