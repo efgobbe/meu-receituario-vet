@@ -2,7 +2,7 @@ import streamlit as st
 from fpdf import FPDF
 from datetime import date
 
-# --- DADOS DO DR. ELIÉSER ---
+# --- DADOS FIXOS DO DR. ELIÉSER ---
 NOME_VET = "Dr. Eliéser Ferreira Gobbe"
 TITULO = "Médico Veterinário"
 REGISTRO = "CRMV-SC 2754"
@@ -12,7 +12,6 @@ CPF_VET = "CPF: 272.814.978-06"
 
 # --- INTERFACE ---
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
-
 st.title("📋 Gerador de Receituário")
 
 with st.form("form_receita"):
@@ -25,7 +24,7 @@ with st.form("form_receita"):
         data_hoje = date.today().strftime("%d/%m/%Y")
 
     st.divider()
-    prescricao = st.text_area("Prescrição Técnica", height=200)
+    prescricao = st.text_area("Prescrição Técnica", height=150)
     btn_gerar = st.form_submit_button("Gerar Receituário PDF")
 
 # --- LÓGICA DO PDF ---
@@ -42,26 +41,51 @@ if btn_gerar:
     pdf.cell(0, 5, txt=CPF_VET, ln=True, align='C')
     pdf.line(10, 42, 200, 42) 
     
-    pdf.ln(15)
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, txt=f"Paciente: {paciente}", ln=True)
-    pdf.cell(0, 8, txt=f"Espécie: {especie}", ln=True)
-    pdf.cell(0, 8, txt=f"Proprietário: {proprietario}", ln=True)
     pdf.ln(10)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
+    pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
+    pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
     
+    pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
     pdf.set_font("Arial", '', 11)
-    pdf.multi_cell(0, 8, txt=prescricao)
+    pdf.multi_cell(0, 7, txt=prescricao)
     
-    # Rodapé
-    pdf.ln(40)
+    # Assinatura do Veterinário
+    pdf.ln(15)
     pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 8, txt=NOME_VET, ln=True, align='C')
+    pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
     pdf.set_font("Arial", '', 9)
     pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
     pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
+    # --- RODAPÉ TÉCNICO FIXO ---
+    pdf.ln(10)
+    pdf.set_draw_color(200, 200, 200) # Cor da linha mais clara
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y()) 
+    pdf.ln(2)
+    
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(110, 5, txt="IDENTIFICAÇÃO DO COMPRADOR", border=0)
+    pdf.cell(0, 5, txt="IDENTIFICAÇÃO DO FORNECEDOR", ln=True)
+    
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(110, 5, txt="Nome: _______________________________________", border=0)
+    pdf.cell(0, 5, txt="____________________________________________", ln=True)
+    
+    pdf.cell(110, 5, txt="Ident.: ____________________ Org. Em: ________", border=0)
+    pdf.cell(0, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
+    
+    pdf.cell(110, 5, txt="End: ________________________________________", border=0)
+    pdf.cell(0, 5, txt="Data: ____/____/______", ln=True, align='C')
+    
+    pdf.cell(110, 5, txt="Cidade: _____________________ UF: ___________", border=0)
+    pdf.ln(5)
+    pdf.cell(110, 5, txt="Tel: ________________________", border=0)
+
+    # Download
     pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
     st.download_button(label="📥 Baixar PDF", data=pdf_bytes, file_name=f"receita_{paciente}.pdf")
