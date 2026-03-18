@@ -38,11 +38,24 @@ with st.expander("2. Adicionar Itens à Prescrição", expanded=True):
     with col_med:
         medicamento = st.text_input("Nome do Medicamento / Fármaco")
     
+    # NOVOS CAMPOS: Quantidade e Apresentação
+    col_qtd, col_un, col_vazio = st.columns([1, 1, 2])
+    with col_qtd:
+        quantidade = st.selectbox("Qtd.", list(range(1, 11)))
+    with col_un:
+        unidade = st.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
+    
     instrucoes = st.text_area("Dose e Instruções de Uso")
     
     if st.button("➕ Adicionar Medicamento"):
         if medicamento and instrucoes:
-            item_formatado = {"via": via, "nome": medicamento, "dose": instrucoes}
+            item_formatado = {
+                "via": via, 
+                "nome": medicamento, 
+                "dose": instrucoes,
+                "qtd": quantidade,
+                "un": unidade
+            }
             st.session_state.lista_medicamentos.append(item_formatado)
             st.success(f"{medicamento} adicionado!")
         else:
@@ -52,7 +65,7 @@ with st.expander("2. Adicionar Itens à Prescrição", expanded=True):
 if st.session_state.lista_medicamentos:
     st.write("---")
     for i, item in enumerate(st.session_state.lista_medicamentos):
-        st.markdown(f"**{i+1}. {item['nome']}** ({item['via']})")
+        st.markdown(f"**{i+1}. {item['nome']}** --- {item['qtd']} {item['un']} ({item['via']})")
     
     if st.button("🗑️ Limpar Lista"):
         st.session_state.lista_medicamentos = []
@@ -80,3 +93,40 @@ if st.button("🚀 Gerar Receituário PDF"):
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
         pdf.set_font("Arial", '', 10)
         pdf.set_x(40)
+        pdf.cell(0, 6, txt=TITULO, ln=True, align='L')
+        pdf.set_x(40)
+        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
+        pdf.set_x(40)
+        pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
+        pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5) 
+        
+        # Dados do Paciente
+        pdf.ln(15)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 7, txt=f"Paciente: {paciente}   |   Especie: {especie}", ln=True)
+        pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
+        
+        # Prescrições
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
+        
+        for item in st.session_state.lista_medicamentos:
+            pdf.set_font("Arial", 'B', 11)
+            # Exibe: Nome do Medicamento ........... 2 Cx (Uso Oral)
+            texto_med = f"{item['nome']} {'.' * 10} {item['qtd']} {item['un']} ({item['via']})"
+            pdf.cell(0, 7, txt=texto_med, ln=True)
+            
+            pdf.set_font("Arial", '', 11)
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item['dose']}")
+            pdf.ln(3)
+        
+        # Assinatura
+        pdf.ln(15)
+        pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
+        pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align
