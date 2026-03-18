@@ -17,7 +17,7 @@ st.title("📋 Gerador de Receituário")
 with st.form("form_receita"):
     col1, col2 = st.columns(2)
     with col1:
-        paciente = st.text_input("Nome do Paciente")
+        paciente = st.text_input("Nome do Animal")
         especie = st.text_input("Espécie")
     with col2:
         proprietario = st.text_input("Proprietário/Tutor")
@@ -55,7 +55,7 @@ if btn_gerar:
     pdf.set_font("Arial", '', 11)
     pdf.multi_cell(0, 7, txt=prescricao)
     
-    # Assinatura do Veterinário
+    # Assinatura do Veterinário (Centro)
     pdf.ln(15)
     pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
     pdf.set_font("Arial", 'B', 10)
@@ -64,25 +64,37 @@ if btn_gerar:
     pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
     pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-    # --- SEÇÃO: IDENTIFICAÇÃO DO COMPRADOR (CENTRALIZADA) ---
+    # --- RODAPÉ DIVIDIDO EM DUAS COLUNAS ---
     pdf.ln(15)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 6, txt="Identificação do Comprador", ln=True, align='C')
-    pdf.set_font("Arial", '', 9)
-    pdf.cell(0, 7, txt="Nome: __________________________________________________________________", ln=True, align='C')
-    pdf.cell(0, 7, txt="Ident.: _________________________ Org. Em: _______________________________", ln=True, align='C')
-    pdf.cell(0, 7, txt="End: ___________________________________________________________________", ln=True, align='C')
-    pdf.cell(0, 7, txt="Cidade: __________________________ UF: ___________ Tel: ___________________", ln=True, align='C')
+    y_inicial = pdf.get_y()
     
-    # --- SEÇÃO: IDENTIFICAÇÃO DO FORNECEDOR (CENTRALIZADA) ---
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 6, txt="Identificação do Fornecedor", ln=True, align='C')
-    pdf.ln(5)
-    pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
-    pdf.set_font("Arial", '', 9)
-    pdf.cell(0, 7, txt="Assinatura do Farmacêutico", ln=True, align='C')
-    pdf.cell(0, 7, txt="Data: ____ / ____ / ________", ln=True, align='C')
+    # COLUNA ESQUERDA: Identificação do Comprador
+    pdf.set_xy(10, y_inicial)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 6, txt="Identificação do Comprador", ln=False, align='C')
+    
+    pdf.set_font("Arial", '', 8)
+    pdf.set_xy(10, y_inicial + 6)
+    pdf.cell(95, 5, txt="Nome: ________________________________", ln=True, align='C')
+    pdf.set_x(10)
+    pdf.cell(95, 5, txt="Ident.: ______________ Org. Em: ________", ln=True, align='C')
+    pdf.set_x(10)
+    pdf.cell(95, 5, txt="End: _________________________________", ln=True, align='C')
+    pdf.set_x(10)
+    pdf.cell(95, 5, txt="Cidade: ___________ UF: ___ Tel: ________", ln=True, align='C')
+    
+    # COLUNA DIREITA: Identificação do Fornecedor
+    pdf.set_xy(105, y_inicial)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 6, txt="Identificação do Fornecedor", ln=False, align='C')
+    
+    pdf.set_font("Arial", '', 8)
+    pdf.set_xy(105, y_inicial + 10) # Espaço para a linha de assinatura
+    pdf.cell(95, 5, txt="________________________________", ln=True, align='C')
+    pdf.set_x(105)
+    pdf.cell(95, 5, txt="Assinatura do Farmacêutico", ln=True, align='C')
+    pdf.set_x(105)
+    pdf.cell(95, 5, txt="Data: ____ / ____ / ________", ln=True, align='C')
 
     # Saída do PDF
     pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
