@@ -13,13 +13,13 @@ CPF_VET = "CPF: 272.814.978-06"
 
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
-st.title("📋 Gerador de Receituário Profissional")
+st.title("📋 Gerador de Receituário")
 
-if 'lista_medicamentos' not in st.session_state:
-    st.session_state.lista_medicamentos = []
+if 'lista_meds' not in st.session_state:
+    st.session_state.lista_meds = []
 
 # --- 1. PACIENTE ---
-with st.expander("1. Identificação do Paciente", expanded=True):
+with st.expander("1. Identificação", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
         paciente = st.text_input("Nome do Animal")
@@ -30,63 +30,67 @@ with st.expander("1. Identificação do Paciente", expanded=True):
 
 # --- 2. PRESCRIÇÃO ---
 with st.expander("2. Adicionar Itens", expanded=True):
-    col_v, col_m = st.columns([1, 2])
-    with col_v:
+    v_col, m_col = st.columns([1, 2])
+    with v_col:
         via = st.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
-    with col_m:
-        medicamento = st.text_input("Medicamento")
+    with m_col:
+        med = st.text_input("Medicamento")
     
-    col_q, col_u, _ = st.columns([1, 1, 2])
-    with col_q:
+    q_col, u_col, _ = st.columns([1, 1, 2])
+    with q_col:
         qtd = st.selectbox("Qtd.", list(range(1, 11)))
-    with col_u:
+    with u_col:
         un = st.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
     
-    instrucoes = st.text_area("Instruções")
+    inst = st.text_area("Instruções")
     
-    if st.button("➕ Adicionar Medicamento"):
-        if medicamento and instrucoes:
-            st.session_state.lista_medicamentos.append({
-                "via": via, "nome": medicamento, "dose": instrucoes, "qtd": qtd, "un": un
-            })
+    if st.button("➕ Adicionar"):
+        if med and inst:
+            st.session_state.lista_meds.append({"v": via, "n": med, "i": inst, "q": qtd, "u": un})
             st.success("Adicionado!")
         else:
-            st.error("Preencha o nome e as instruções.")
+            st.error("Preencha Medicamento e Instruções.")
 
-if st.session_state.lista_medicamentos:
+if st.session_state.lista_meds:
     if st.button("🗑️ Limpar Lista"):
-        st.session_state.lista_medicamentos = []
+        st.session_state.lista_meds = []
         st.rerun()
 
 # --- 3. PDF ---
-if st.button("🚀 Gerar Receituário PDF"):
-    if not st.session_state.lista_medicamentos:
-        st.warning("Adicione itens à lista primeiro.")
+if st.button("🚀 Gerar PDF"):
+    if not st.session_state.lista_meds:
+        st.warning("Adicione itens primeiro.")
     else:
         pdf = FPDF()
         pdf.add_page()
-        y_at = pdf.get_y()
+        y = pdf.get_y()
         
-        # Logo
         if os.path.exists("logo.png"):
-            try:
-                pdf.image("logo.png", 10, y_at - 5, w=25)
-            except:
-                pass
+            try: pdf.image("logo.png", 10, y - 5, w=25)
+            except: pass
 
-        # Cabeçalho
-        pdf.set_xy(40, y_at)
+        pdf.set_xy(40, y)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
         pdf.set_font("Arial", '', 10)
         pdf.set_x(40)
-        pdf.cell(0, 5, txt=TITULO, ln=True, align='L')
+        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='L')
         pdf.set_x(40)
         pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
         pdf.set_x(40)
         pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
         pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
         
-        # Dados do Atendimento
         pdf.ln(15)
-        pdf.set_font("Arial", 'B',
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 7, txt=f"Paciente: {paciente} ({especie})", ln=True)
+        pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
+        
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
+        
+        for item in st.session_state.lista_meds:
+            pdf.set_font("Arial", 'B', 11)
+            pdf.cell(0, 7, txt=f"{item['n']} --- {item['q']} {item['u']} ({item['v']})", ln=True)
+            pdf.set_font("Arial", '', 1
