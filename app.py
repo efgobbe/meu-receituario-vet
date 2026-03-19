@@ -8,11 +8,11 @@ st.title("📋 Gerador de Receituário - 2 Vias")
 
 if 'lista' not in st.session_state: st.session_state.lista = []
 
-# --- 1. ENTRADA DE DADOS ---
+# --- 1. ENTRADA DE DADOS (INTERFACE) ---
 c1, c2 = st.columns(2)
 paciente = c1.text_input("Nome do Animal")
 proprietario = c2.text_input("Proprietário/Tutor")
-# Espécie posicionada abaixo de Proprietário conforme solicitado
+# Espécie como terceiro campo, abaixo de Proprietário
 especie_sel = c2.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
 data_hoje = date.today().strftime("%d/%m/%Y")
 
@@ -54,7 +54,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 35)
             pdf.cell(100, 4, "Rua Isidoro Schilickmann, 93 - Braço do Norte - SC", 0, 1, 'L')
             
-            # Dados do Paciente (Espécie aparece aqui no corpo)
+            # CORPO DA RECEITA (Onde os dados aparecem preenchidos)
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 10)
             pdf.set_x(ox + 10)
@@ -76,43 +76,4 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             # Assinatura Veterinário
             pdf.set_y(148)
             pdf.set_x(ox + 10)
-            pdf.cell(130, 0, "_" * 45, 0, 1, 'C')
-            pdf.ln(2)
-            pdf.set_font("Arial", 'B', 9)
-            pdf.set_x(ox + 10)
-            pdf.cell(130, 4, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'C')
-            pdf.set_font("Arial", '', 8)
-            pdf.set_x(ox + 10)
-            pdf.cell(130, 4, f"Médico Veterinário - CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
-
-            # Rodapé (Nome preenchido e SEM espécie conforme solicitado)
-            ry = 162
-            pdf.set_xy(ox + 10, ry)
-            pdf.set_font("Arial", 'B', 8)
-            pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
-            pdf.set_font("Arial", '', 8)
-            
-            # Nome puxa o Proprietário automaticamente 
-            pdf.set_x(ox+10); pdf.cell(65, 4, f"Nome: {proprietario}", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "Org. Em:", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "Ident.:", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "End:", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "Cidade:", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "UF: SC", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, "Tel:", 0, 1)
-            
-            # Fornecedor
-            pdf.set_xy(ox + 85, ry)
-            pdf.set_font("Arial", 'B', 8)
-            pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
-            pdf.set_xy(ox + 85, ry + 22)
-            pdf.set_font("Arial", '', 8)
-            pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
-            pdf.set_x(ox + 85)
-            pdf.cell(55, 4, "Data: ____/____/____", 0, 1, 'R')
-
-        # Linha de corte
-        pdf.line(148.5, 5, 148.5, 205)
-        
-        pdf_out = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button("📥 BAIXAR RECEITUÁRIO", pdf_out, "receita.pdf", "application/pdf")
+            pdf.cell(130, 0, "_" * 45, 0, 1
