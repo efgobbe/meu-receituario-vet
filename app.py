@@ -36,10 +36,10 @@ def excluir_favorito(nome):
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. BOTÃO NOVA RECEITA (LIMPA TUDO) ---
-if st.button("✨ NOVA RECEITA (LIMPAR TUDO)"):
+# --- 1. BOTÃO NOVA RECEITA (NOME ATUALIZADO) ---
+if st.button("✨ NOVA RECEITA"):
     st.session_state.lista = []
-    st.cache_data.clear()
+    # Limpa os campos de texto forçando o recarregamento
     st.rerun()
 
 # --- 2. SEÇÃO FAVORITOS ---
@@ -60,8 +60,8 @@ with st.expander("📂 FAVORITOS", expanded=False):
         st.info("Nenhum modelo salvo.")
 
 # --- 3. IDENTIFICAÇÃO ---
-paciente = st.text_input("Paciente:", key="paciente_input")
-proprietario = st.text_input("Proprietário:", key="prop_input")
+paciente = st.text_input("Paciente:")
+proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
 data_hoje = date.today().strftime("%d/%m/%Y")
 
@@ -156,11 +156,9 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
         pdf.line(148.5, 5, 148.5, 205)
         out = pdf.output(dest='S').encode('latin-1', 'ignore')
         
-        # O botão de download gera o arquivo. No celular, o navegador costuma 
-        # perguntar se deseja "Abrir" ou "Visualizar" logo após baixar.
         st.download_button(
-            label="📥 CLIQUE AQUI PARA BAIXAR E ABRIR O PDF",
+            label="📥 CLIQUE PARA BAIXAR E ABRIR O PDF",
             data=out,
-            file_name=f"Receita_{paciente}_{data_hoje}.pdf",
+            file_name=f"Receita_{paciente}_{data_hoje.replace('/','-')}.pdf",
             mime="application/pdf"
         )
