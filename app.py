@@ -5,124 +5,131 @@ import os
 
 # --- DADOS FIXOS ---
 NOME_VET = "Dr. Eliéser Ferreira Gobbe"
-TITULO = "Médico Veterinário"
-REGISTRO = "CRMV-SC 2754"
-ENDERECO = "Rua Isidoro Schilickmann, 93-Santa Augusta"
-CIDADE_ESTADO = "Braço do Norte - SC"
+TIT_VET = "Médico Veterinário"
+REG_VET = "CRMV-SC 2754"
+END_VET = "Rua Isidoro Schilickmann, 93-Santa Augusta"
+CID_VET = "Braço do Norte - SC"
 CPF_VET = "CPF: 272.814.978-06"
 
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
-st.title("📋 Gerador de Receituário - 2 Vias (Paisagem)")
+st.title("📋 Gerador - 2 Vias Paisagem")
 
 if 'lista_meds' not in st.session_state:
     st.session_state.lista_meds = []
 
-# --- 1. IDENTIFICAÇÃO DO PACIENTE ---
-with st.expander("1. Identificação do Paciente", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        paciente = st.text_input("Nome do Animal")
-        especie = st.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Outra"])
-    with col2:
-        proprietario = st.text_input("Proprietário/Tutor")
-        data_hoje = date.today().strftime("%d/%m/%Y")
+# --- 1. PACIENTE ---
+with st.expander("1. Identificação", expanded=True):
+    c1, c2 = st.columns(2)
+    paciente = c1.text_input("Animal")
+    especie = c1.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Outra"])
+    proprietario = c2.text_input("Tutor")
+    data_hoje = date.today().strftime("%d/%m/%Y")
 
 # --- 2. PRESCRIÇÃO ---
-with st.expander("2. Adicionar Medicamentos", expanded=True):
+with st.expander("2. Medicamentos", expanded=True):
     with st.form("form_med", clear_on_submit=True):
-        c_via, c_med = st.columns([1, 2])
-        via_in = c_via.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
-        med_in = c_med.text_input("Medicamento")
-        c_qtd, c_un, _ = st.columns([1, 1, 2])
-        qtd_in = c_qtd.selectbox("Qtd.", list(range(1, 11)))
-        un_in = c_un.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
-        inst_in = st.text_area("Instruções")
-        
-        if st.form_submit_button("➕ Adicionar à Lista"):
-            if med_in and inst_in:
-                st.session_state.lista_meds.append({
-                    "nome": med_in, "qtd": qtd_in, "unidade": un_in, "via": via_in, "instrucoes": inst_in
-                })
+        cv, cm = st.columns([1, 2])
+        v_in = cv.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
+        m_in = cm.text_input("Medicamento")
+        cq, cu = st.columns(2)
+        q_in = cq.number_input("Qtd", min_value=1, value=1)
+        u_in = cu.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
+        i_in = st.text_area("Instruções")
+        if st.form_submit_button("➕ Adicionar"):
+            if m_in and i_in:
+                st.session_state.lista_meds.append({"n": m_in, "q": q_in, "u": u_in, "v": v_in, "i": i_in})
                 st.rerun()
 
-if st.session_state.lista_meds:
-    if st.button("🗑️ Limpar Toda a Lista"):
-        st.session_state.lista_meds = []
-        st.rerun()
+if st.session_state.lista_meds and st.button("🗑️ Limpar Lista"):
+    st.session_state.lista_meds = []
+    st.rerun()
 
-def gerar_conteudo_via(pdf, x_offset, titulo_via):
-    """Função interna para desenhar cada via individualmente"""
-    y_start = 10
-    
-    # Logo e Cabeçalho
-    if os.path.exists("logo.png"):
-        try: pdf.image("logo.png", x_offset + 5, y_start, w=20)
-        except: pass
-
-    pdf.set_xy(x_offset + 30, y_start)
+def desenhar_via(pdf, ox, texto_via):
+    # ox é o offset X (0 para esquerda, 148.5 para direita)
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 5, txt=NOME_VET, ln=True)
+    # Cabeçalho simplificado para evitar cortes
+    pdf.set_xy(ox + 10, 10)
+    pdf.cell(130, 6, txt=NOME_VET, ln=True, align='C')
     pdf.set_font("Arial", '', 9)
-    pdf.set_x(x_offset + 30)
-    pdf.cell(0, 4, txt=TITULO, ln=True)
-    pdf.set_x(x_offset + 30)
-    pdf.cell(0, 4, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True)
-    pdf.set_x(x_offset + 30)
-    pdf.cell(0, 4, txt=CPF_VET, ln=True)
+    pdf.set_x(ox + 10)
+    pdf.cell(130, 4, txt=TIT_VET, ln=True, align='C')
+    pdf.set_x(ox + 10)
+    pdf.cell(130, 4, txt=END_VET, ln=True, align='C')
+    pdf.set_x(ox + 10)
+    pdf.cell(130, 4, txt=CPF_VET, ln=True, align='C')
     
-    # Identificação da Via
-    pdf.set_xy(x_offset + 5, y_start + 22)
+    # Linha e Tipo de Via
+    pdf.ln(2)
+    pdf.set_x(ox + 5)
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(130, 5, txt=f"--- {titulo_via} ---", ln=True, align='C')
-    pdf.line(x_offset + 5, pdf.get_y(), x_offset + 135, pdf.get_y())
+    pdf.cell(135, 5, txt=f"--- {texto_via} ---", ln=True, align='C')
+    pdf.line(ox + 5, pdf.get_y(), ox + 140, pdf.get_y())
 
-    # Dados Paciente
-    pdf.ln(5)
+    # Dados do Paciente
+    pdf.ln(4)
     pdf.set_font("Arial", 'B', 10)
-    pdf.set_x(x_offset + 5)
+    pdf.set_x(ox + 10)
     pdf.cell(0, 5, txt=f"Paciente: {paciente}", ln=True)
-    pdf.set_x(x_offset + 5)
-    pdf.cell(0, 5, txt=f"Espécie: {especie}", ln=True)
-    pdf.set_x(x_offset + 5)
+    pdf.set_x(ox + 10)
     pdf.cell(0, 5, txt=f"Proprietário: {proprietario}", ln=True)
     
     # Prescrição
     pdf.ln(3)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.set_x(x_offset + 5)
-    pdf.cell(0, 7, txt="PRESCRIÇÃO:", ln=True)
-    for item in st.session_state.lista_meds:
+    pdf.set_x(ox + 10)
+    pdf.cell(0, 6, txt="PRESCRIÇÃO:", ln=True)
+    for it in st.session_state.lista_meds:
         pdf.set_font("Arial", 'B', 9)
-        pdf.set_x(x_offset + 5)
-        pdf.cell(0, 5, txt=f"{item['nome']} - {item['qtd']} {item['unidade']} ({item['via']})", ln=True)
+        pdf.set_x(ox + 10)
+        txt_m = f"{it['n']} - {it['q']} {it['u']} ({it['v']})"
+        pdf.cell(0, 5, txt=txt_m, ln=True)
         pdf.set_font("Arial", '', 9)
-        pdf.set_x(x_offset + 5)
-        pdf.multi_cell(130, 4, txt=f"Instruções: {item['instrucoes']}")
+        pdf.set_x(ox + 10)
+        pdf.multi_cell(125, 4, txt=f"Inst: {it['i']}")
         pdf.ln(1)
     
-    # Assinatura Vet
-    pdf.ln(5)
-    curr_y = pdf.get_y()
-    pdf.set_xy(x_offset + 5, curr_y)
+    # Assinatura Veterinário
+    pdf.set_y(150)
+    pdf.set_x(ox + 10)
     pdf.cell(130, 0, txt="_" * 40, ln=True, align='C')
     pdf.ln(2)
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(x_offset + 130, 4, txt=NOME_VET, ln=True, align='C')
+    pdf.set_x(ox + 10)
+    pdf.cell(130, 4, txt=NOME_VET, ln=True, align='C')
     pdf.set_font("Arial", '', 8)
-    pdf.cell(x_offset + 130, 4, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
-    pdf.cell(x_offset + 130, 4, txt=f"Data: {data_hoje}", ln=True, align='C')
+    pdf.set_x(ox + 10)
+    pdf.cell(130, 4, txt=f"{TIT_VET} - {REG_VET} - Data: {data_hoje}", ln=True, align='C')
 
-    # Rodapé Técnico
-    pdf.ln(5)
-    ry = pdf.get_y()
-    # Comprador
-    pdf.set_xy(x_offset + 5, ry)
+    # Rodapé Comprador/Fornecedor [cite: 9-16, 19-20]
+    ry = 170
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(70, 4, txt="Identificação do Comprador", ln=True)
+    pdf.set_xy(ox + 10, ry)
+    pdf.cell(65, 4, txt="Identificação do Comprador", ln=True)
     pdf.set_font("Arial", '', 7)
-    for label in ["Nome:", "Ident.:", "Org. Em:", "End:", "Cidade:", "UF:", "Tel:"]:
-        pdf.set_x(x_offset + 5)
-        pdf.cell(70, 3.5, txt=label, ln=True)
+    labels = ["Nome:", "Ident:", "Org. Em:", "End:", "Cidade:", "UF:", "Tel:"]
+    for lab in labels:
+        pdf.set_x(ox + 10)
+        pdf.cell(65, 3.5, txt=lab, ln=True)
     
     # Fornecedor
-    pdf.set_xy(x_offset +
+    pdf.set_xy(ox + 80, ry)
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(60, 4, txt="Identificação do Fornecedor", ln=True, align='R')
+    pdf.set_xy(ox + 80, ry + 15)
+    pdf.set_font("Arial", '', 7)
+    pdf.cell(60, 4, txt="Assinatura Farmacêutico", ln=True, align='R')
+    pdf.set_x(ox + 80)
+    pdf.cell(60, 4, txt="Data: ____/____/____", ln=True, align='R')
+
+# --- GERAR PDF ---
+if st.button("🖨️ Gerar 2 Vias Paisagem"):
+    if not st.session_state.lista_meds:
+        st.warning("Adicione itens.")
+    else:
+        pdf = FPDF(orientation='L', unit='mm', format='A4')
+        pdf.add_page()
+        desenhar_via(pdf, 0, "1ª VIA: PACIENTE") # Esquerda
+        pdf.line(148.5, 5, 148.5, 205) # Divisória
+        desenhar_via(pdf, 148.5, "2ª VIA: FARMÁCIA") # Direita
+        
+        out = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button(label="💾 Baixar PDF", data=out, file_name="receita.pdf", mime="application/pdf")
