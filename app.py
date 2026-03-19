@@ -57,14 +57,14 @@ if st.button("🚀 Gerar e Baixar PDF"):
     else:
         pdf = FPDF()
         pdf.add_page()
-        y_ini = pdf.get_y()
+        y_topo = pdf.get_y()
         
         if os.path.exists("logo.png"):
-            try: pdf.image("logo.png", 10, y_ini - 5, w=25)
+            try: pdf.image("logo.png", 10, y_topo - 5, w=25)
             except: pass
 
         # Cabeçalho [cite: 3, 4, 5]
-        pdf.set_xy(40, y_ini)
+        pdf.set_xy(40, y_topo)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True)
         pdf.set_font("Arial", '', 10)
@@ -94,7 +94,7 @@ if st.button("🚀 Gerar e Baixar PDF"):
             pdf.multi_cell(0, 6, txt=f"Instruções: {item['instrucoes']}")
             pdf.ln(2)
         
-        # Assinatura do Veterinário [cite: 17, 18]
+        # Assinatura Veterinário [cite: 17, 18]
         pdf.ln(10)
         pdf.cell(0, 0, txt="_" * 45, ln=True, align='C')
         pdf.ln(5)
@@ -104,33 +104,35 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # RODAPÉ - IDENTIFICAÇÃO COMPRADOR E FORNECEDOR 
+        # RODAPÉ - CÓPIA FIEL DOS ANEXOS [cite: 9-16, 19-20, 29-36, 39-40]
         pdf.ln(10)
-        y_rodape = pdf.get_y()
+        y_final = pdf.get_y()
         
-        # Bloco Esquerdo: Comprador [cite: 9-16]
-        pdf.set_xy(10, y_rodape)
+        # --- Lado Esquerdo: Identificação do Comprador ---
+        pdf.set_xy(10, y_final)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, txt="Identificação do Comprador", ln=True)
+        pdf.cell(95, 7, txt="Identificação do Comprador", ln=True) # [cite: 9, 29]
         pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 6, txt="Nome:", ln=True)
-        pdf.cell(0, 6, txt="Ident.:", ln=True)
-        pdf.cell(0, 6, txt="Org. Em:", ln=True)
-        pdf.cell(0, 6, txt="End:", ln=True)
-        pdf.cell(0, 6, txt="Cidade:", ln=True)
-        pdf.cell(0, 6, txt="UF:", ln=True)
-        pdf.cell(0, 6, txt="Tel:", ln=True)
+        pdf.cell(95, 6, txt="Nome:", ln=True) # [cite: 10, 30]
+        pdf.cell(95, 6, txt="Ident.:", ln=True) # [cite: 11, 32]
+        pdf.cell(95, 6, txt="Org. Em:", ln=True) # [cite: 12, 31]
+        pdf.cell(95, 6, txt="End:", ln=True) # [cite: 13, 33]
+        pdf.cell(95, 6, txt="Cidade:", ln=True) # [cite: 14, 34]
+        pdf.cell(95, 6, txt="UF:", ln=True) # [cite: 15, 35]
+        pdf.cell(95, 6, txt="Tel:", ln=True) # [cite: 16, 36]
         
-        # Bloco Direito: Fornecedor [cite: 19-20]
-        pdf.set_xy(120, y_rodape)
+        # --- Lado Direito: Identificação do Fornecedor ---
+        # Posicionado exatamente na mesma altura do título do comprador
+        pdf.set_xy(120, y_final)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, txt="Identificação do Fornecedor", ln=True)
-        pdf.ln(15)
-        pdf.set_x(120)
+        pdf.cell(80, 7, txt="Identificação do Fornecedor", ln=True) # [cite: 19, 39]
+        
+        # Espaço para assinatura e campos finais à direita
+        pdf.set_xy(120, y_final + 25) 
         pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 6, txt="Assinatura do Farmacêutico", ln=True)
+        pdf.cell(80, 6, txt="Assinatura do Farmacêutico", ln=True) # 
         pdf.set_x(120)
-        pdf.cell(0, 6, txt="Data:", ln=True)
+        pdf.cell(80, 6, txt="Data:", ln=True) # 
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
