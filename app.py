@@ -32,12 +32,18 @@ def excluir_favorito(nome):
         with open(FAVORITOS_FILE, "w") as f:
             json.dump(favs, f)
 
+# Inicialização de estados
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. SEÇÃO FAVORITOS (NOME ATUALIZADO) ---
-favoritos = carregar_favoritos()
+# --- 1. BOTÃO NOVA RECEITA (LIMPA TUDO) ---
+if st.button("✨ NOVA RECEITA (LIMPAR TUDO)"):
+    st.session_state.lista = []
+    st.cache_data.clear()
+    st.rerun()
 
+# --- 2. SEÇÃO FAVORITOS ---
+favoritos = carregar_favoritos()
 with st.expander("📂 FAVORITOS", expanded=False):
     if favoritos:
         selecionado = st.selectbox("Escolha um modelo:", [""] + list(favoritos.keys()), key="fav_top")
@@ -53,15 +59,15 @@ with st.expander("📂 FAVORITOS", expanded=False):
     else:
         st.info("Nenhum modelo salvo.")
 
-# --- 2. IDENTIFICAÇÃO ---
-paciente = st.text_input("Paciente:")
-proprietario = st.text_input("Proprietário:")
+# --- 3. IDENTIFICAÇÃO ---
+paciente = st.text_input("Paciente:", key="paciente_input")
+proprietario = st.text_input("Proprietário:", key="prop_input")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
 data_hoje = date.today().strftime("%d/%m/%Y")
 
 st.write("---")
 
-# --- 3. PRESCRIÇÃO ---
+# --- 4. PRESCRIÇÃO ---
 with st.form("f_med", clear_on_submit=True):
     col_v, col_m = st.columns([1, 2])
     via_sel = col_v.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Injetável", "Uso Otológico", "Uso Ocular"])
@@ -78,14 +84,14 @@ with st.form("f_med", clear_on_submit=True):
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
             st.rerun()
 
-# --- 4. LISTA ATUAL E SALVAMENTO ---
+# --- 5. LISTA ATUAL E SALVAMENTO ---
 if st.session_state.lista:
     st.subheader("Itens na Receita:")
     for idx, it in enumerate(st.session_state.lista):
         st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
 
     c1, c2 = st.columns([1, 2])
-    if c1.button("🗑️ Limpar Lista"):
+    if c1.button("🗑️ Limpar Lista de Medicamentos"):
         st.session_state.lista = []
         st.rerun()
 
@@ -98,7 +104,7 @@ if st.session_state.lista:
             else:
                 st.warning("⚠️ Digite um nome para salvar.")
 
-# --- 5. GERAÇÃO DO PDF ---
+# --- 6. GERAÇÃO DO PDF ---
 st.write("---")
 if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
     if not st.session_state.lista:
@@ -149,4 +155,12 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
 
         pdf.line(148.5, 5, 148.5, 205)
         out = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button("📥 BAIXAR RECEITUÁRIO", out, "receita.pdf", "application/pdf")
+        
+        # O botão de download gera o arquivo. No celular, o navegador costuma 
+        # perguntar se deseja "Abrir" ou "Visualizar" logo após baixar.
+        st.download_button(
+            label="📥 CLIQUE AQUI PARA BAIXAR E ABRIR O PDF",
+            data=out,
+            file_name=f"Receita_{paciente}_{data_hoje}.pdf",
+            mime="application/pdf"
+        )
