@@ -35,23 +35,23 @@ def excluir_favorito(nome):
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. GESTÃO DE FAVORITOS (BOTÃO VISÍVEL E BARRA LATERAL) ---
+# --- 1. SEÇÃO FAVORITOS (NOME ATUALIZADO) ---
 favoritos = carregar_favoritos()
 
-with st.expander("📂 ABRIR MEUS MODELOS SALVOS (FAVORITOS)", expanded=False):
+with st.expander("📂 FAVORITOS", expanded=False):
     if favoritos:
-        selecionado = st.selectbox("Escolha um modelo para carregar:", [""] + list(favoritos.keys()), key="fav_top")
+        selecionado = st.selectbox("Escolha um modelo:", [""] + list(favoritos.keys()), key="fav_top")
         col1, col2 = st.columns(2)
         if selecionado != "":
-            if col1.button("📥 Carregar Modelo Selecionado"):
+            if col1.button("📥 Carregar Modelo"):
                 st.session_state.lista = favoritos[selecionado]
-                st.success(f"✅ Protocolo '{selecionado}' carregado com sucesso!")
+                st.success(f"✅ '{selecionado}' carregado!")
                 st.rerun()
-            if col2.button("🗑️ Excluir Modelo Selecionado"):
+            if col2.button("🗑️ Excluir Modelo"):
                 excluir_favorito(selecionado)
                 st.rerun()
     else:
-        st.info("Nenhum modelo salvo ainda.")
+        st.info("Nenhum modelo salvo.")
 
 # --- 2. IDENTIFICAÇÃO ---
 paciente = st.text_input("Paciente:")
@@ -73,36 +73,36 @@ with st.form("f_med", clear_on_submit=True):
     
     i_in = st.text_area("Instruções")
     
-    if st.form_submit_button("➕ Adicionar Medicamento à Lista"):
+    if st.form_submit_button("➕ Adicionar à Lista"):
         if med_in and i_in:
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
             st.rerun()
 
 # --- 4. LISTA ATUAL E SALVAMENTO ---
 if st.session_state.lista:
-    st.subheader("Itens na Receita Atual:")
+    st.subheader("Itens na Receita:")
     for idx, it in enumerate(st.session_state.lista):
         st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
 
     c1, c2 = st.columns([1, 2])
-    if c1.button("🗑️ Limpar Tudo"):
+    if c1.button("🗑️ Limpar Lista"):
         st.session_state.lista = []
         st.rerun()
 
     with c2.container():
-        nome_fav = st.text_input("Nomear este protocolo para salvar:", placeholder="Ex: Otite Canina")
+        nome_fav = st.text_input("Nomear modelo para salvar:", placeholder="Ex: Protocolo Ouvido")
         if st.button("⭐ SALVAR NOS FAVORITOS"):
             if nome_fav:
                 salvar_favorito(nome_fav, st.session_state.lista)
-                st.success(f"✅ Salvo! O modelo '{nome_fav}' já está disponível em seus favoritos.")
+                st.success(f"✅ Salvo como '{nome_fav}'!")
             else:
-                st.warning("⚠️ Digite um nome para o modelo antes de salvar.")
+                st.warning("⚠️ Digite um nome para salvar.")
 
 # --- 5. GERAÇÃO DO PDF ---
 st.write("---")
 if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
     if not st.session_state.lista:
-        st.error("Adicione itens à prescrição.")
+        st.error("Adicione medicamentos primeiro.")
     else:
         pdf = FPDF(orientation='L', unit='mm', format='A4')
         pdf.add_page()
