@@ -7,6 +7,17 @@ import json
 # Configuração da página
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
 
+st.markdown(
+    """
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 # --- TÍTULO CENTRALIZADO (CORREÇÃO DEFINITIVA) ---
 st.markdown("<h1 style='text-align: center;'>📋 Receituário Médico Veterinário</h1>", unsafe_allow_html=True)
 
