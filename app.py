@@ -43,11 +43,7 @@ with st.expander("2. Adicionar Medicamentos", expanded=True):
         if st.form_submit_button("➕ Adicionar à Lista"):
             if med_in and inst_in:
                 st.session_state.lista_meds.append({
-                    "nome": med_in,
-                    "qtd": qtd_in,
-                    "unidade": un_in,
-                    "via": via_in,
-                    "instrucoes": inst_in
+                    "nome": med_in, "qtd": qtd_in, "unidade": un_in, "via": via_in, "instrucoes": inst_in
                 })
                 st.success("Adicionado!")
             else:
@@ -69,10 +65,8 @@ if st.button("🚀 Gerar e Baixar PDF"):
         y_topo = pdf.get_y()
         
         if os.path.exists("logo.png"):
-            try:
-                pdf.image("logo.png", 10, y_topo - 5, w=25)
-            except:
-                pass
+            try: pdf.image("logo.png", 10, y_topo - 5, w=25)
+            except: pass
 
         # Cabeçalho
         pdf.set_xy(40, y_topo)
@@ -101,19 +95,13 @@ if st.button("🚀 Gerar e Baixar PDF"):
         
         for item in st.session_state.lista_meds:
             pdf.set_font("Arial", 'B', 11)
-            n = item.get('nome', '')
-            q = item.get('qtd', '')
-            u = item.get('unidade', '')
-            v = item.get('via', '')
-            ins = item.get('instrucoes', '')
-            
-            linha = f"{n} --- {q} {u} ({v})"
+            linha = f"{item.get('nome')} --- {item.get('qtd')} {item.get('unidade')} ({item.get('via')})"
             pdf.cell(0, 7, txt=linha, ln=True)
             pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {ins}")
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item.get('instrucoes')}")
             pdf.ln(3)
         
-        # Assinatura
+        # Assinatura Central
         pdf.ln(15)
         pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
         pdf.ln(5)
@@ -123,39 +111,33 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # Rodapé Técnico - Conforme Anexo
+        # RODAPÉ - IDENTIFICAÇÃO DO COMPRADOR E FORNECEDOR (FIEL AO ANEXO)
         pdf.ln(10)
         yr = pdf.get_y()
         
-        # Identificação do Comprador
+        # Lado Esquerdo - Comprador (Vertical)
         pdf.set_xy(10, yr)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(95, 7, txt="Identificação do Comprador", ln=True)
         pdf.set_font("Arial", '', 10)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="Nome:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="Ident.:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="Org. Em:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="End:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="Cidade:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="UF:", ln=True)
-        pdf.set_x(10)
-        pdf.cell(95, 7, txt="Tel:", ln=True)
+        pdf.cell(95, 6, txt="Nome:", ln=True)
+        pdf.cell(95, 6, txt="Ident.:", ln=True)
+        pdf.cell(95, 6, txt="Org. Em:", ln=True)
+        pdf.cell(95, 6, txt="End:", ln=True)
+        pdf.cell(95, 6, txt="Cidade:", ln=True)
+        pdf.cell(95, 6, txt="UF:", ln=True)
+        pdf.cell(95, 6, txt="Tel:", ln=True)
         
-        # Identificação do Fornecedor
-        pdf.set_xy(110, yr)
+        # Lado Direito - Fornecedor (Posicionado lateralmente)
+        pdf.set_xy(115, yr)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(90, 7, txt="Identificação do Fornecedor", ln=True)
-        pdf.set_xy(110, yr + 25)
+        pdf.cell(85, 7, txt="Identificação do Fornecedor", ln=True)
+        pdf.ln(18) # Espaço para assinatura
+        pdf.set_x(115)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(90, 7, txt="Assinatura do Farmacêutico", ln=True)
-        pdf.set_x(110)
-        pdf.cell(90, 7, txt="Data:", ln=True)
+        pdf.cell(85, 6, txt="Assinatura do Farmacêutico", ln=True)
+        pdf.set_x(115)
+        pdf.cell(85, 6, txt="Data:", ln=True)
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
