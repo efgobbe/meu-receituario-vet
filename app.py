@@ -149,4 +149,16 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             for L in ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]:
                 pdf.set_x(ox + 10); pdf.cell(65, 4, L, 0, 1)
             
-            pdf.set_xy(ox + 85, ry
+            pdf.set_xy(ox + 85, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
+            pdf.set_xy(ox + 85, ry + 22); pdf.set_font("Arial", '', 8); pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
+            pdf.set_x(ox + 85); pdf.cell(55, 4, f"Data: {data_hoje}", 0, 1, 'R')
+
+        pdf.line(148.5, 5, 148.5, 205)
+        out = pdf.output(dest='S').encode('latin-1', 'ignore')
+        
+        st.download_button(
+            label="📥 CLIQUE PARA ABRIR E IMPRIMIR",
+            data=out,
+            file_name=f"Receita_{paciente}.pdf",
+            mime="application/pdf"
+        )
