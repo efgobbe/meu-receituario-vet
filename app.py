@@ -11,8 +11,8 @@ ENDERECO = "Rua Isidoro Schilickmann, 93-Santa Augusta"
 CIDADE_ESTADO = "Braço do Norte - SC"
 CPF_VET = "CPF: 272.814.978-06"
 
-st.set_page_config(page_title="Sistema Dr. Eliéser", layout="centered")
-st.title("📋 Gerador de Receituário")
+st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
+st.title("📋 Gerador de Receituário - 2 Vias (Paisagem)")
 
 if 'lista_meds' not in st.session_state:
     st.session_state.lista_meds = []
@@ -50,87 +50,79 @@ if st.session_state.lista_meds:
         st.session_state.lista_meds = []
         st.rerun()
 
-# --- 3. GERAÇÃO E IMPRESSÃO ---
-if st.button("🖨️ Gerar PDF para Impressão"):
-    if not st.session_state.lista_meds:
-        st.warning("Adicione medicamentos primeiro.")
-    else:
-        pdf = FPDF()
-        pdf.add_page()
-        y_topo = pdf.get_y()
-        
-        if os.path.exists("logo.png"):
-            try: pdf.image("logo.png", 10, y_topo - 5, w=25)
-            except: pass
+def gerar_conteudo_via(pdf, x_offset, titulo_via):
+    """Função interna para desenhar cada via individualmente"""
+    y_start = 10
+    
+    # Logo e Cabeçalho
+    if os.path.exists("logo.png"):
+        try: pdf.image("logo.png", x_offset + 5, y_start, w=20)
+        except: pass
 
-        # Cabeçalho [cite: 3-5]
-        pdf.set_xy(40, y_topo)
-        pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 8, txt=NOME_VET, ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.set_x(40)
-        pdf.cell(0, 6, txt=TITULO, ln=True)
-        pdf.set_x(40)
-        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True)
-        pdf.set_x(40)
-        pdf.cell(0, 5, txt=CPF_VET, ln=True)
-        pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
-        
-        # Dados Paciente [cite: 1, 2, 6]
-        pdf.ln(15)
-        pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
-        pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
-        pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
-        
-        # Prescrição [cite: 7, 8]
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
-        for item in st.session_state.lista_meds:
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 7, txt=f"{item['nome']} --- {item['qtd']} {item['unidade']} ({item['via']})", ln=True)
-            pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {item['instrucoes']}")
-            pdf.ln(2)
-        
-        # Assinatura Veterinário [cite: 17, 18]
-        pdf.ln(10)
-        pdf.cell(0, 0, txt="_" * 45, ln=True, align='C')
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 6, txt=NOME_VET, ln=True, align='C')
+    pdf.set_xy(x_offset + 30, y_start)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 5, txt=NOME_VET, ln=True)
+    pdf.set_font("Arial", '', 9)
+    pdf.set_x(x_offset + 30)
+    pdf.cell(0, 4, txt=TITULO, ln=True)
+    pdf.set_x(x_offset + 30)
+    pdf.cell(0, 4, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True)
+    pdf.set_x(x_offset + 30)
+    pdf.cell(0, 4, txt=CPF_VET, ln=True)
+    
+    # Identificação da Via
+    pdf.set_xy(x_offset + 5, y_start + 22)
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(130, 5, txt=f"--- {titulo_via} ---", ln=True, align='C')
+    pdf.line(x_offset + 5, pdf.get_y(), x_offset + 135, pdf.get_y())
+
+    # Dados Paciente
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_x(x_offset + 5)
+    pdf.cell(0, 5, txt=f"Paciente: {paciente}", ln=True)
+    pdf.set_x(x_offset + 5)
+    pdf.cell(0, 5, txt=f"Espécie: {especie}", ln=True)
+    pdf.set_x(x_offset + 5)
+    pdf.cell(0, 5, txt=f"Proprietário: {proprietario}", ln=True)
+    
+    # Prescrição
+    pdf.ln(3)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_x(x_offset + 5)
+    pdf.cell(0, 7, txt="PRESCRIÇÃO:", ln=True)
+    for item in st.session_state.lista_meds:
+        pdf.set_font("Arial", 'B', 9)
+        pdf.set_x(x_offset + 5)
+        pdf.cell(0, 5, txt=f"{item['nome']} - {item['qtd']} {item['unidade']} ({item['via']})", ln=True)
         pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
-        pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
+        pdf.set_x(x_offset + 5)
+        pdf.multi_cell(130, 4, txt=f"Instruções: {item['instrucoes']}")
+        pdf.ln(1)
+    
+    # Assinatura Vet
+    pdf.ln(5)
+    curr_y = pdf.get_y()
+    pdf.set_xy(x_offset + 5, curr_y)
+    pdf.cell(130, 0, txt="_" * 40, ln=True, align='C')
+    pdf.ln(2)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(x_offset + 130, 4, txt=NOME_VET, ln=True, align='C')
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(x_offset + 130, 4, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
+    pdf.cell(x_offset + 130, 4, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # RODAPÉ - FORMATO DOS ANEXOS 
-        pdf.ln(10)
-        y_f = pdf.get_y()
-        
-        # Lado Esquerdo: Comprador [cite: 10-16]
-        pdf.set_xy(10, y_f)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(95, 7, txt="Identificação do Comprador", ln=True)
-        pdf.set_font("Arial", '', 10)
-        for label in ["Nome:", "Ident.:", "Org. Em:", "End:", "Cidade:", "UF:", "Tel:"]:
-            pdf.cell(95, 6, txt=label, ln=True)
-        
-        # Lado Direito: Fornecedor [cite: 19-20]
-        pdf.set_xy(120, y_f)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(80, 7, txt="Identificação do Fornecedor", ln=True)
-        pdf.set_xy(120, y_f + 25)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(80, 6, txt="Assinatura do Farmacêutico", ln=True)
-        pdf.set_x(120)
-        pdf.cell(80, 6, txt="Data:", ln=True)
-
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(
-            label="💾 Clique para Gravar e Imprimir",
-            data=pdf_bytes,
-            file_name=f"receita_{paciente}.pdf",
-            mime="application/pdf"
-        )
-        st.info("Após clicar em Gravar, abra o ficheiro e prima Ctrl+P para imprimir.")
+    # Rodapé Técnico
+    pdf.ln(5)
+    ry = pdf.get_y()
+    # Comprador
+    pdf.set_xy(x_offset + 5, ry)
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(70, 4, txt="Identificação do Comprador", ln=True)
+    pdf.set_font("Arial", '', 7)
+    for label in ["Nome:", "Ident.:", "Org. Em:", "End:", "Cidade:", "UF:", "Tel:"]:
+        pdf.set_x(x_offset + 5)
+        pdf.cell(70, 3.5, txt=label, ln=True)
+    
+    # Fornecedor
+    pdf.set_xy(x_offset +
