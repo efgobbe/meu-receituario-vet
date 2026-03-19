@@ -3,23 +3,9 @@ from fpdf import FPDF
 from datetime import date
 import os
 import json
-import urllib.parse
 
-# 1. Configuração da página e PWA
+# Configuração da página
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
-
-# Script para o PWA (manifesto e service worker)
-st.markdown(
-    """
-    <link rel="manifest" href="manifest.json">
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
-    </script>
-    """,
-    unsafe_allow_html=True
-)
 
 # --- TÍTULO CENTRALIZADO ---
 st.markdown("<h1 style='text-align: center;'>📋 Receituário Médico Veterinário</h1>", unsafe_allow_html=True)
@@ -51,12 +37,12 @@ def excluir_favorito(nome):
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- BOTÃO NOVA RECEITA ---
+# --- 1. BOTÃO NOVA RECEITA ---
 if st.button("✨ NOVA RECEITA"):
     st.session_state.lista = []
     st.rerun()
 
-# --- SEÇÃO FAVORITOS ---
+# --- 2. SEÇÃO FAVORITOS ---
 favoritos = carregar_favoritos()
 with st.expander("📂 FAVORITOS", expanded=False):
     if favoritos:
@@ -73,7 +59,7 @@ with st.expander("📂 FAVORITOS", expanded=False):
     else:
         st.info("Nenhum modelo salvo.")
 
-# --- IDENTIFICAÇÃO ---
+# --- 3. IDENTIFICAÇÃO ---
 paciente = st.text_input("Paciente:")
 proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
@@ -81,7 +67,7 @@ data_hoje = date.today().strftime("%d/%m/%Y")
 
 st.write("---")
 
-# --- PRESCRIÇÃO ---
+# --- 4. PRESCRIÇÃO ---
 with st.form("f_med", clear_on_submit=True):
     col_v, col_m = st.columns([1, 2])
     via_sel = col_v.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Injetável", "Uso Otológico", "Uso Ocular"])
@@ -98,71 +84,79 @@ with st.form("f_med", clear_on_submit=True):
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
             st.rerun()
 
-# --- LISTA ATUAL E SALVAMENTO ---
+# --- 5. LISTA ATUAL E SALVAMENTO ---
 if st.session_state.lista:
     st.subheader("Itens na Receita:")
     for idx, it in enumerate(st.session_state.lista):
         st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
 
-    if st.button("🗑️ Limpar Lista"):
+    c1, c2 = st.columns([1, 2])
+    if c1.button("🗑️ Limpar Lista"):
         st.session_state.lista = []
         st.rerun()
 
-    nome_fav = st.text_input("Nomear modelo para salvar:")
-    if st.button("⭐ SALVAR NOS FAVORITOS"):
-        if nome_fav:
-            salvar_favorito(nome_fav, st.session_state.lista)
-            st.success(f"✅ Salvo!")
+    with c2.container():
+        nome_fav = st.text_input("Nomear modelo para salvar:", placeholder="Ex: Protocolo Ouvido")
+        if st.button("⭐ SALVAR NOS FAVORITOS"):
+            if nome_fav:
+                salvar_favorito(nome_fav, st.session_state.lista)
+                st.success(f"✅ Salvo!")
 
-# --- BOTÕES DE SAÍDA (PDF E WHATSAPP) ---
+# --- 6. GERAÇÃO DO PDF (IMPRIMIR RECEITA) ---
 st.write("---")
-col_pdf, col_wa = st.columns(2)
+if st.button("🖨️ IMPRIMIR RECEITA"):
+    if not st.session_state.lista:
+        st.error("Adicione medicamentos primeiro.")
+    else:
+        pdf = FPDF(orientation='L', unit='mm', format='A4')
+        pdf.add_page()
+        pdf.set_auto_page_break(False) 
 
-with col_pdf:
-    if st.button("🖨️ GERAR PDF"):
-        if not st.session_state.lista:
-            st.error("Lista vazia.")
-        else:
-            pdf = FPDF(orientation='L', unit='mm', format='A4')
-            pdf.add_page()
-            for ox in [0, 150]:
-                pdf.set_font("Arial", 'B', 11); pdf.set_xy(ox + 35, 10)
-                pdf.cell(100, 5, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'L')
-                pdf.set_font("Arial", '', 8); pdf.set_x(ox + 35)
-                pdf.cell(100, 4, "CRMV-SC 2754", 0, 1, 'L')
-                pdf.ln(10); pdf.set_font("Arial", 'B', 10); pdf.set_x(ox + 10)
-                pdf.cell(130, 5, f"Paciente: {paciente} | Prop: {proprietario}", 0, 1)
-                pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
-                for it in st.session_state.lista:
-                    pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
-                    pdf.cell(130, 5, f"- {it['n']} ({it['v']})", 0, 1)
-                    pdf.set_font("Arial", '', 9); pdf.set_x(ox + 15)
-                    pdf.multi_cell(120, 4, f"{it['i']}")
-            out = pdf.output(dest='S').encode('latin-1', 'ignore')
-            st.download_button("📥 BAIXAR/ABRIR PDF", out, f"Receita_{paciente}.pdf", "application/pdf")
-
-with col_wa:
-    if st.button("📱 ENVIAR VIA WHATSAPP"):
-        if not st.session_state.lista:
-            st.error("Lista vazia.")
-        else:
-            # Criando o texto para o WhatsApp
-            texto = f"*RECEITUÁRIO MÉDICO VETERINÁRIO*\n"
-            texto += f"*Dr. Eliéser Ferreira Gobbe - CRMV-SC 2754*\n\n"
-            texto += f"*Paciente:* {paciente}\n"
-            texto += f"*Proprietário:* {proprietario}\n"
-            texto += f"----------------------------\n"
+        for ox in [0, 150]:
+            if os.path.exists("logo.png"): pdf.image("logo.png", ox + 10, 10, w=20)
+            pdf.set_font("Arial", 'B', 11); pdf.set_xy(ox + 35, 10)
+            pdf.cell(100, 5, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'L')
+            pdf.set_font("Arial", '', 8); pdf.set_x(ox + 35)
+            pdf.cell(100, 4, "Médico Veterinário - CRMV-SC 2754", 0, 1, 'L')
+            pdf.set_x(ox + 35)
+            pdf.cell(100, 4, "Rua Isidoro Schilickmann, 93 - Braço do Norte - SC", 0, 1, 'L')
+            
+            pdf.ln(10); pdf.set_font("Arial", 'B', 10); pdf.set_x(ox + 10)
+            pdf.cell(130, 5, f"Paciente: {paciente}", 0, 1)
+            pdf.set_x(ox + 10); pdf.cell(130, 5, f"Proprietário: {proprietario}", 0, 1)
+            pdf.set_x(ox + 10); pdf.cell(130, 5, f"Espécie: {especie_sel}", 0, 1)
+            
+            pdf.ln(3); pdf.set_font("Arial", 'B', 10); pdf.set_x(ox + 10)
+            pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
             for it in st.session_state.lista:
-                texto += f"\n💊 *{it['n']}* ({it['v']})\n"
-                texto += f"Qtd: {it['q']} {it['a']}\n"
-                texto += f"Instruções: {it['i']}\n"
+                pdf.ln(1); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
+                pdf.cell(130, 5, f"- {it['n']} --- {it['q']} {it['a']} ({it['v']})", 0, 1)
+                pdf.set_font("Arial", '', 9); pdf.set_x(ox + 15)
+                pdf.multi_cell(120, 4, f"{it['i']}")
             
-            # Codificando para URL
-            texto_url = urllib.parse.quote(texto)
-            link_wa = f"https://wa.me/?text={texto_url}"
+            pdf.set_y(148); pdf.set_x(ox + 10)
+            pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
+            pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
+            pdf.cell(130, 4, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'C')
+            pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
+            pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
+
+            ry = 162
+            pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
+            pdf.set_font("Arial", '', 8)
+            for L in ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]:
+                pdf.set_x(ox + 10); pdf.cell(65, 4, L, 0, 1)
             
-            # Botão que abre o link
-            st.markdown(f"""<a href="{link_wa}" target="_blank" style="text-decoration: none;">
-                            <div style="background-color: #25D366; color: white; padding: 10px; text-align: center; border-radius: 5px;">
-                                Abrir WhatsApp agora
-                            </div></a>""", unsafe_allow_html=True)
+            pdf.set_xy(ox + 85, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
+            pdf.set_xy(ox + 85, ry + 22); pdf.set_font("Arial", '', 8); pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
+            pdf.set_x(ox + 85); pdf.cell(55, 4, f"Data: {data_hoje}", 0, 1, 'R')
+
+        pdf.line(148.5, 5, 148.5, 205)
+        out = pdf.output(dest='S').encode('latin-1', 'ignore')
+        
+        st.download_button(
+            label="📥 CLIQUE PARA ABRIR E IMPRIMIR",
+            data=out,
+            file_name=f"Receita_{paciente}.pdf",
+            mime="application/pdf"
+        )
