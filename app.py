@@ -4,11 +4,11 @@ from datetime import date
 import os
 import json
 
-# Título da aba do navegador e nome do sistema atualizado
+# Configuração da página e Título
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
 st.title("📋 Receituário Médico Veterinário")
 
-# --- SISTEMA DE ARQUIVOS (FAVORITOS) ---
+# --- SISTEMA DE FAVORITOS ---
 FAVORITOS_FILE = "favoritos.json"
 
 def carregar_favoritos():
@@ -35,23 +35,25 @@ def excluir_favorito(nome):
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. BARRA LATERAL (GESTÃO DE FAVORITOS) ---
-with st.sidebar:
-    st.header("⭐ Modelos Salvos")
-    favoritos = carregar_favoritos()
+# --- 1. GESTÃO DE FAVORITOS (BOTÃO VISÍVEL E BARRA LATERAL) ---
+favoritos = carregar_favoritos()
+
+with st.expander("📂 ABRIR MEUS MODELOS SALVOS (FAVORITOS)", expanded=False):
     if favoritos:
-        selecionado = st.selectbox("Selecione um protocolo:", [""] + list(favoritos.keys()))
+        selecionado = st.selectbox("Escolha um modelo para carregar:", [""] + list(favoritos.keys()), key="fav_top")
+        col1, col2 = st.columns(2)
         if selecionado != "":
-            if st.button("📥 Carregar"):
+            if col1.button("📥 Carregar Modelo Selecionado"):
                 st.session_state.lista = favoritos[selecionado]
+                st.success(f"✅ Protocolo '{selecionado}' carregado com sucesso!")
                 st.rerun()
-            if st.button("🗑️ Excluir permanentemente"):
+            if col2.button("🗑️ Excluir Modelo Selecionado"):
                 excluir_favorito(selecionado)
                 st.rerun()
     else:
-        st.info("Nenhuma receita salva.")
+        st.info("Nenhum modelo salvo ainda.")
 
-# --- 2. IDENTIFICAÇÃO (LINHAS SEPARADAS) ---
+# --- 2. IDENTIFICAÇÃO ---
 paciente = st.text_input("Paciente:")
 proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
@@ -71,28 +73,30 @@ with st.form("f_med", clear_on_submit=True):
     
     i_in = st.text_area("Instruções")
     
-    if st.form_submit_button("➕ Adicionar Medicamento"):
+    if st.form_submit_button("➕ Adicionar Medicamento à Lista"):
         if med_in and i_in:
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
             st.rerun()
 
-# --- 4. LISTA ATUAL E SALVAR ---
+# --- 4. LISTA ATUAL E SALVAMENTO ---
 if st.session_state.lista:
     st.subheader("Itens na Receita Atual:")
     for idx, it in enumerate(st.session_state.lista):
         st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
 
     c1, c2 = st.columns([1, 2])
-    if c1.button("🗑️ Limpar Lista Atual"):
+    if c1.button("🗑️ Limpar Tudo"):
         st.session_state.lista = []
         st.rerun()
 
-    nome_fav = c2.text_input("Nome para salvar este modelo:", placeholder="Ex: Protocolo Giardíase")
-    if c2.button("⭐ Salvar nos Favoritos"):
-        if nome_fav:
-            salvar_favorito(nome_fav, st.session_state.lista)
-            st.success("Salvo!")
-            st.rerun()
+    with c2.container():
+        nome_fav = st.text_input("Nomear este protocolo para salvar:", placeholder="Ex: Otite Canina")
+        if st.button("⭐ SALVAR NOS FAVORITOS"):
+            if nome_fav:
+                salvar_favorito(nome_fav, st.session_state.lista)
+                st.success(f"✅ Salvo! O modelo '{nome_fav}' já está disponível em seus favoritos.")
+            else:
+                st.warning("⚠️ Digite um nome para o modelo antes de salvar.")
 
 # --- 5. GERAÇÃO DO PDF ---
 st.write("---")
@@ -130,4 +134,19 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
             pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
             pdf.cell(130, 4, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'C')
-            pdf.set_font("Arial", '', 8); pdf.set_
+            pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
+            pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
+
+            ry = 162
+            pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
+            pdf.set_font("Arial", '', 8)
+            for L in ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]:
+                pdf.set_x(ox + 10); pdf.cell(65, 4, L, 0, 1)
+            
+            pdf.set_xy(ox + 85, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
+            pdf.set_xy(ox + 85, ry + 22); pdf.set_font("Arial", '', 8); pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
+            pdf.set_x(ox + 85); pdf.cell(55, 4, f"Data: {data_hoje}", 0, 1, 'R')
+
+        pdf.line(148.5, 5, 148.5, 205)
+        out = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button("📥 BAIXAR RECEITUÁRIO", out, "receita.pdf", "application/pdf")
