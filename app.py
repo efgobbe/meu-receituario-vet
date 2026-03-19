@@ -7,8 +7,8 @@ import json
 # Configuração da página
 st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
 
-# --- TÍTULO CENTRALIZADO ---
-st.markdown("<h1 style='text-align: center;'>📋 Receituário Médico Veterinário</h1>", unsafe_content_label=True, unsafe_content=True)
+# --- TÍTULO CENTRALIZADO (CORRIGIDO) ---
+st.markdown("<h1 style='text-align: center;'>📋 Receituário Médico Veterinário</h1>", unsafe_content_type=True)
 
 # --- SISTEMA DE FAVORITOS ---
 FAVORITOS_FILE = "favoritos.json"
