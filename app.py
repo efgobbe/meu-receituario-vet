@@ -9,7 +9,7 @@ st.title("📋 Gerador de Receituário - 2 Vias")
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. IDENTIFICAÇÃO (LINHAS SEPARADAS) ---
+# --- 1. IDENTIFICAÇÃO ---
 paciente = st.text_input("Paciente:")
 proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
@@ -17,7 +17,7 @@ data_hoje = date.today().strftime("%d/%m/%Y")
 
 st.write("---")
 
-# --- 2. PRESCRIÇÃO (COM NOVO CAMPO APRESENTAÇÃO) ---
+# --- 2. PRESCRIÇÃO ---
 with st.form("f_med", clear_on_submit=True):
     col_v, col_m = st.columns([1, 2])
     via_sel = col_v.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Injetável", "Uso Otológico", "Uso Ocular"])
@@ -25,8 +25,7 @@ with st.form("f_med", clear_on_submit=True):
     
     col_q, col_a = st.columns(2)
     q_in = col_q.number_input("Quantidade", min_value=1, value=1)
-    # Novo campo Apresentação inserido aqui
-    apres_in = col_a.selectbox("Apresentação", ["Cx", "Fr", "Cp", "Amp", "Bisn", "Env", "Tb", "Un"])
+    apres_in = col_a.selectbox("Apresentação", ["Cx", "Fr", "Cp", "Amp", "Bisn", "Env", "Tb", "Un", "Seringa", "Lata"])
     
     i_in = st.text_area("Instruções")
     
@@ -37,9 +36,10 @@ with st.form("f_med", clear_on_submit=True):
             })
             st.rerun()
 
-if st.session_state.lista and st.button("🗑️ Limpar Lista"):
-    st.session_state.lista = []
-    st.rerun()
+if st.session_state.lista:
+    if st.button("🗑️ Limpar Lista"):
+        st.session_state.lista = []
+        st.rerun()
 
 # --- 3. GERAÇÃO DO PDF ---
 if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
@@ -75,14 +75,18 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.ln(3)
             pdf.set_font("Arial", 'B', 10)
             pdf.set_x(ox + 10); pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
-            pdf.set_font("Arial", '', 9)
+            
             for it in st.session_state.lista:
+                pdf.ln(1)
+                pdf.set_font("Arial", 'B', 9)
                 pdf.set_x(ox + 10)
-                # Incluindo a Apresentação (Cx, Fr, etc) na linha
-                texto_med = f"- {it['n']} --- {it['q']} {it['a']} ({it['v']})"
-                pdf.cell(130, 5, texto_med, 0, 1)
+                # Linha do Medicamento
+                pdf.cell(130, 5, f"- {it['n']} --- {it['q']} {it['a']} ({it['v']})", 0, 1)
+                
+                # Instruções (SEM a palavra "Inst:")
+                pdf.set_font("Arial", '', 9)
                 pdf.set_x(ox + 15)
-                pdf.multi_cell(120, 4, f"Inst: {it['i']}")
+                pdf.multi_cell(120, 4, f"{it['i']}") # Removido o prefixo aqui
             
             # Assinatura
             pdf.set_y(148)
