@@ -9,8 +9,7 @@ st.title("📋 Gerador de Receituário - 2 Vias")
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. ENTRADA DE DADOS (INTERFACE EM LINHAS SEPARADAS) ---
-# Cada campo em sua própria linha conforme solicitado
+# --- 1. ENTRADA DE DADOS (LINHAS SEPARADAS) ---
 paciente = st.text_input("Paciente:")
 proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
@@ -26,11 +25,11 @@ with st.form("f_med", clear_on_submit=True):
     if st.form_submit_button("➕ Adicionar Medicamento"):
         if med_in and i_in:
             st.session_state.lista.append({"n": med_in, "q": q_in, "v": via_sel, "i": i_in})
-            st.render()
+            st.rerun() # Corrigido de render para rerun
 
 if st.session_state.lista and st.button("🗑️ Limpar Lista"):
     st.session_state.lista = []
-    st.render()
+    st.rerun() # Corrigido de render para rerun
 
 # --- 2. GERAÇÃO DO PDF ---
 if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
@@ -41,7 +40,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
         pdf.add_page()
         pdf.set_auto_page_break(False) 
 
-        for ox in [0, 150]: # Offset para as duas vias
+        for ox in [0, 150]:
             # Cabeçalho
             if os.path.exists("logo.png"):
                 pdf.image("logo.png", ox + 10, 10, w=20)
@@ -55,7 +54,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 35)
             pdf.cell(100, 4, "Rua Isidoro Schilickmann, 93 - Braço do Norte - SC", 0, 1, 'L')
             
-            # Corpo do PDF (Campos um abaixo do outro) 
+            # Dados Identificação no PDF
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 10)
             pdf.set_x(ox + 10)
@@ -65,7 +64,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 10)
             pdf.cell(130, 5, f"Espécie: {especie_sel}", 0, 1)
             
-            # Prescrição [cite: 7, 24, 42]
+            # Prescrição
             pdf.ln(3)
             pdf.set_x(ox + 10)
             pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
@@ -76,7 +75,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
                 pdf.set_x(ox + 15)
                 pdf.multi_cell(120, 4, f"Inst: {it['i']}")
             
-            # Assinatura [cite: 17, 18, 39]
+            # Assinatura
             pdf.set_y(148)
             pdf.set_x(ox + 10)
             pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
@@ -88,17 +87,17 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
 
-            # Rodapé (Rótulos vazios) 
+            # Rodapé Identificação (Rótulos em branco) [cite: 9-16]
             ry = 162
             pdf.set_xy(ox + 10, ry)
             pdf.set_font("Arial", 'B', 8)
             pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
-            labels = ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]
-            for L in labels:
+            labs = ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]
+            for L in labs:
                 pdf.set_x(ox + 10); pdf.cell(65, 4, L, 0, 1)
             
-            # Fornecedor [cite: 19, 20, 49, 50, 54, 55]
+            # Fornecedor
             pdf.set_xy(ox + 85, ry)
             pdf.set_font("Arial", 'B', 8)
             pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
@@ -108,8 +107,6 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 85)
             pdf.cell(55, 4, "Data: ____/____/____", 0, 1, 'R')
 
-        # Linha de corte central
         pdf.line(148.5, 5, 148.5, 205)
-        
         pdf_out = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 BAIXAR RECEITUÁRIO", pdf_out, "receita.pdf", "application/pdf")
