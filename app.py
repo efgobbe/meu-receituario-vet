@@ -12,7 +12,7 @@ if 'lista' not in st.session_state: st.session_state.lista = []
 c1, c2 = st.columns(2)
 paciente = c1.text_input("Nome do Animal")
 proprietario = c2.text_input("Proprietário/Tutor")
-# Campo Espécie inserido abaixo de Proprietário conforme solicitado
+# Espécie posicionada abaixo de Proprietário conforme solicitado
 especie_sel = c2.selectbox("Espécie", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
 data_hoje = date.today().strftime("%d/%m/%Y")
 
@@ -41,7 +41,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
         pdf.set_auto_page_break(False) 
 
         for ox in [0, 150]: # Lado Esquerdo e Direito
-            # Cabeçalho com Logo
+            # Cabeçalho
             if os.path.exists("logo.png"):
                 pdf.image("logo.png", ox + 10, 10, w=20)
             
@@ -54,14 +54,15 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 35)
             pdf.cell(100, 4, "Rua Isidoro Schilickmann, 93 - Braço do Norte - SC", 0, 1, 'L')
             
-            # Corpo
+            # Dados do Paciente (Espécie aparece aqui no corpo)
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 10)
             pdf.set_x(ox + 10)
-            pdf.cell(130, 5, f"Paciente: {paciente}", 0, 1)
+            pdf.cell(130, 5, f"Paciente: {paciente} ({especie_sel})", 0, 1)
             pdf.set_x(ox + 10)
             pdf.cell(130, 5, f"Proprietário: {proprietario}", 0, 1)
             
+            # Prescrição
             pdf.ln(3)
             pdf.set_x(ox + 10)
             pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
@@ -84,15 +85,15 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"Médico Veterinário - CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
 
-            # Rodapé (Espécie como item de preenchimento)
+            # Rodapé (Nome preenchido e SEM espécie conforme solicitado)
             ry = 162
             pdf.set_xy(ox + 10, ry)
             pdf.set_font("Arial", 'B', 8)
             pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
-            # A espécie selecionada aparece aqui no preenchimento do rodapé [cite: 2, 10]
+            
+            # Nome puxa o Proprietário automaticamente 
             pdf.set_x(ox+10); pdf.cell(65, 4, f"Nome: {proprietario}", 0, 1)
-            pdf.set_x(ox+10); pdf.cell(65, 4, f"Espécie: {especie_sel}", 0, 1)
             pdf.set_x(ox+10); pdf.cell(65, 4, "Org. Em:", 0, 1)
             pdf.set_x(ox+10); pdf.cell(65, 4, "Ident.:", 0, 1)
             pdf.set_x(ox+10); pdf.cell(65, 4, "End:", 0, 1)
@@ -110,6 +111,7 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             pdf.set_x(ox + 85)
             pdf.cell(55, 4, "Data: ____/____/____", 0, 1, 'R')
 
+        # Linha de corte
         pdf.line(148.5, 5, 148.5, 205)
         
         pdf_out = pdf.output(dest='S').encode('latin-1', 'ignore')
