@@ -50,8 +50,8 @@ if st.session_state.lista_meds:
         st.session_state.lista_meds = []
         st.rerun()
 
-# --- 3. GERAÇÃO DO PDF ---
-if st.button("🚀 Gerar e Baixar PDF"):
+# --- 3. GERAÇÃO E IMPRESSÃO ---
+if st.button("🖨️ Gerar PDF para Impressão"):
     if not st.session_state.lista_meds:
         st.warning("Adicione medicamentos primeiro.")
     else:
@@ -63,7 +63,7 @@ if st.button("🚀 Gerar e Baixar PDF"):
             try: pdf.image("logo.png", 10, y_topo - 5, w=25)
             except: pass
 
-        # Cabeçalho [cite: 3, 4, 5]
+        # Cabeçalho [cite: 3-5]
         pdf.set_xy(40, y_topo)
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 8, txt=NOME_VET, ln=True)
@@ -104,35 +104,33 @@ if st.button("🚀 Gerar e Baixar PDF"):
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # RODAPÉ - CÓPIA FIEL DOS ANEXOS [cite: 9-16, 19-20, 29-36, 39-40]
+        # RODAPÉ - FORMATO DOS ANEXOS 
         pdf.ln(10)
-        y_final = pdf.get_y()
+        y_f = pdf.get_y()
         
-        # --- Lado Esquerdo: Identificação do Comprador ---
-        pdf.set_xy(10, y_final)
+        # Lado Esquerdo: Comprador [cite: 10-16]
+        pdf.set_xy(10, y_f)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(95, 7, txt="Identificação do Comprador", ln=True) # [cite: 9, 29]
+        pdf.cell(95, 7, txt="Identificação do Comprador", ln=True)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(95, 6, txt="Nome:", ln=True) # [cite: 10, 30]
-        pdf.cell(95, 6, txt="Ident.:", ln=True) # [cite: 11, 32]
-        pdf.cell(95, 6, txt="Org. Em:", ln=True) # [cite: 12, 31]
-        pdf.cell(95, 6, txt="End:", ln=True) # [cite: 13, 33]
-        pdf.cell(95, 6, txt="Cidade:", ln=True) # [cite: 14, 34]
-        pdf.cell(95, 6, txt="UF:", ln=True) # [cite: 15, 35]
-        pdf.cell(95, 6, txt="Tel:", ln=True) # [cite: 16, 36]
+        for label in ["Nome:", "Ident.:", "Org. Em:", "End:", "Cidade:", "UF:", "Tel:"]:
+            pdf.cell(95, 6, txt=label, ln=True)
         
-        # --- Lado Direito: Identificação do Fornecedor ---
-        # Posicionado exatamente na mesma altura do título do comprador
-        pdf.set_xy(120, y_final)
+        # Lado Direito: Fornecedor [cite: 19-20]
+        pdf.set_xy(120, y_f)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(80, 7, txt="Identificação do Fornecedor", ln=True) # [cite: 19, 39]
-        
-        # Espaço para assinatura e campos finais à direita
-        pdf.set_xy(120, y_final + 25) 
+        pdf.cell(80, 7, txt="Identificação do Fornecedor", ln=True)
+        pdf.set_xy(120, y_f + 25)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(80, 6, txt="Assinatura do Farmacêutico", ln=True) # 
+        pdf.cell(80, 6, txt="Assinatura do Farmacêutico", ln=True)
         pdf.set_x(120)
-        pdf.cell(80, 6, txt="Data:", ln=True) # 
+        pdf.cell(80, 6, txt="Data:", ln=True)
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
+        st.download_button(
+            label="💾 Clique para Gravar e Imprimir",
+            data=pdf_bytes,
+            file_name=f"receita_{paciente}.pdf",
+            mime="application/pdf"
+        )
+        st.info("Após clicar em Gravar, abra o ficheiro e prima Ctrl+P para imprimir.")
