@@ -36,10 +36,9 @@ def excluir_favorito(nome):
 if 'lista' not in st.session_state: 
     st.session_state.lista = []
 
-# --- 1. BOTÃO NOVA RECEITA (NOME ATUALIZADO) ---
+# --- 1. BOTÃO NOVA RECEITA ---
 if st.button("✨ NOVA RECEITA"):
     st.session_state.lista = []
-    # Limpa os campos de texto forçando o recarregamento
     st.rerun()
 
 # --- 2. SEÇÃO FAVORITOS ---
@@ -59,7 +58,7 @@ with st.expander("📂 FAVORITOS", expanded=False):
     else:
         st.info("Nenhum modelo salvo.")
 
-# --- 3. IDENTIFICAÇÃO ---
+# --- 3. IDENTIFICAÇÃO (EM LINHAS SEPARADAS) ---
 paciente = st.text_input("Paciente:")
 proprietario = st.text_input("Proprietário:")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
@@ -104,9 +103,9 @@ if st.session_state.lista:
             else:
                 st.warning("⚠️ Digite um nome para salvar.")
 
-# --- 6. GERAÇÃO DO PDF ---
+# --- 6. GERAÇÃO DO PDF (IMPRIMIR RECEITA) ---
 st.write("---")
-if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
+if st.button("🖨️ IMPRIMIR RECEITA"):
     if not st.session_state.lista:
         st.error("Adicione medicamentos primeiro.")
     else:
@@ -138,27 +137,4 @@ if st.button("🚀 GERAR PDF (2 VIAS PAISAGEM)"):
             
             pdf.set_y(148); pdf.set_x(ox + 10)
             pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
-            pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
-            pdf.cell(130, 4, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'C')
-            pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
-            pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
-
-            ry = 162
-            pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
-            pdf.set_font("Arial", '', 8)
-            for L in ["Nome:", "Org. Em:", "Ident.:", "End:", "Cidade:", "UF: SC", "Tel:"]:
-                pdf.set_x(ox + 10); pdf.cell(65, 4, L, 0, 1)
-            
-            pdf.set_xy(ox + 85, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
-            pdf.set_xy(ox + 85, ry + 22); pdf.set_font("Arial", '', 8); pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
-            pdf.set_x(ox + 85); pdf.cell(55, 4, f"Data: {data_hoje}", 0, 1, 'R')
-
-        pdf.line(148.5, 5, 148.5, 205)
-        out = pdf.output(dest='S').encode('latin-1', 'ignore')
-        
-        st.download_button(
-            label="📥 CLIQUE PARA BAIXAR E ABRIR O PDF",
-            data=out,
-            file_name=f"Receita_{paciente}_{data_hoje.replace('/','-')}.pdf",
-            mime="application/pdf"
-        )
+            pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_
