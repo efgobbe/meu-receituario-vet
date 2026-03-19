@@ -27,17 +27,15 @@ with st.expander("1. Identificação do Paciente", expanded=True):
         proprietario = st.text_input("Proprietário/Tutor")
         data_hoje = date.today().strftime("%d/%m/%Y")
 
-# --- 2. PRESCRIÇÃO (LIMPEZA AUTOMÁTICA) ---
+# --- 2. PRESCRIÇÃO ---
 with st.expander("2. Adicionar Medicamentos", expanded=True):
     with st.form("form_med", clear_on_submit=True):
         c_via, c_med = st.columns([1, 2])
         via_in = c_via.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Ocular", "Uso Otológico", "Uso Injetável"])
         med_in = c_med.text_input("Medicamento")
-        
         c_qtd, c_un, _ = st.columns([1, 1, 2])
         qtd_in = c_qtd.selectbox("Qtd.", list(range(1, 11)))
         un_in = c_un.selectbox("Tipo", ["Cx", "Fr", "Amp", "Bisn", "Env", "Un"])
-        
         inst_in = st.text_area("Instruções")
         
         if st.form_submit_button("➕ Adicionar à Lista"):
@@ -45,12 +43,9 @@ with st.expander("2. Adicionar Medicamentos", expanded=True):
                 st.session_state.lista_meds.append({
                     "nome": med_in, "qtd": qtd_in, "unidade": un_in, "via": via_in, "instrucoes": inst_in
                 })
-                st.success("Adicionado!")
-            else:
-                st.error("Preencha o medicamento e instruções.")
+                st.rerun()
 
 if st.session_state.lista_meds:
-    st.write("---")
     if st.button("🗑️ Limpar Toda a Lista"):
         st.session_state.lista_meds = []
         st.rerun()
@@ -62,82 +57,80 @@ if st.button("🚀 Gerar e Baixar PDF"):
     else:
         pdf = FPDF()
         pdf.add_page()
-        y_topo = pdf.get_y()
+        y_ini = pdf.get_y()
         
         if os.path.exists("logo.png"):
-            try: pdf.image("logo.png", 10, y_topo - 5, w=25)
+            try: pdf.image("logo.png", 10, y_ini - 5, w=25)
             except: pass
 
-        # Cabeçalho
-        pdf.set_xy(40, y_topo)
+        # Cabeçalho [cite: 3, 4, 5]
+        pdf.set_xy(40, y_ini)
         pdf.set_font("Arial", 'B', 14)
-        pdf.cell(0, 8, txt=NOME_VET, ln=True, align='L')
+        pdf.cell(0, 8, txt=NOME_VET, ln=True)
         pdf.set_font("Arial", '', 10)
         pdf.set_x(40)
-        pdf.cell(0, 6, txt=TITULO, ln=True, align='L')
+        pdf.cell(0, 6, txt=TITULO, ln=True)
         pdf.set_x(40)
-        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True, align='L')
+        pdf.cell(0, 5, txt=f"{ENDERECO} - {CIDADE_ESTADO}", ln=True)
         pdf.set_x(40)
-        pdf.cell(0, 5, txt=CPF_VET, ln=True, align='L')
+        pdf.cell(0, 5, txt=CPF_VET, ln=True)
         pdf.line(10, pdf.get_y() + 5, 200, pdf.get_y() + 5)
         
-        # Dados Paciente
+        # Dados Paciente [cite: 1, 2, 6]
         pdf.ln(15)
         pdf.set_font("Arial", 'B', 11)
         pdf.cell(0, 7, txt=f"Paciente: {paciente}", ln=True)
         pdf.cell(0, 7, txt=f"Espécie: {especie}", ln=True)
         pdf.cell(0, 7, txt=f"Proprietário: {proprietario}", ln=True)
         
-        # Prescrição
+        # Prescrição [cite: 7, 8]
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, txt="PRESCRIÇÃO:", ln=True)
-        
         for item in st.session_state.lista_meds:
             pdf.set_font("Arial", 'B', 11)
-            linha = f"{item.get('nome')} --- {item.get('qtd')} {item.get('unidade')} ({item.get('via')})"
-            pdf.cell(0, 7, txt=linha, ln=True)
+            pdf.cell(0, 7, txt=f"{item['nome']} --- {item['qtd']} {item['unidade']} ({item['via']})", ln=True)
             pdf.set_font("Arial", '', 11)
-            pdf.multi_cell(0, 6, txt=f"Instruções: {item.get('instrucoes')}")
-            pdf.ln(3)
+            pdf.multi_cell(0, 6, txt=f"Instruções: {item['instrucoes']}")
+            pdf.ln(2)
         
-        # Assinatura Central
-        pdf.ln(15)
-        pdf.cell(0, 0, txt="__________________________________________", ln=True, align='C')
+        # Assinatura do Veterinário [cite: 17, 18]
+        pdf.ln(10)
+        pdf.cell(0, 0, txt="_" * 45, ln=True, align='C')
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, txt=NOME_VET, ln=True, align='C')
+        pdf.cell(0, 6, txt=NOME_VET, ln=True, align='C')
         pdf.set_font("Arial", '', 9)
         pdf.cell(0, 5, txt=f"{TITULO} - {REGISTRO}", ln=True, align='C')
         pdf.cell(0, 5, txt=f"Data: {data_hoje}", ln=True, align='C')
 
-        # RODAPÉ - IDENTIFICAÇÃO DO COMPRADOR E FORNECEDOR (FIEL AO ANEXO)
+        # RODAPÉ - IDENTIFICAÇÃO COMPRADOR E FORNECEDOR 
         pdf.ln(10)
-        yr = pdf.get_y()
+        y_rodape = pdf.get_y()
         
-        # Lado Esquerdo - Comprador (Vertical)
-        pdf.set_xy(10, yr)
+        # Bloco Esquerdo: Comprador [cite: 9-16]
+        pdf.set_xy(10, y_rodape)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(95, 7, txt="Identificação do Comprador", ln=True)
+        pdf.cell(0, 7, txt="Identificação do Comprador", ln=True)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(95, 6, txt="Nome:", ln=True)
-        pdf.cell(95, 6, txt="Ident.:", ln=True)
-        pdf.cell(95, 6, txt="Org. Em:", ln=True)
-        pdf.cell(95, 6, txt="End:", ln=True)
-        pdf.cell(95, 6, txt="Cidade:", ln=True)
-        pdf.cell(95, 6, txt="UF:", ln=True)
-        pdf.cell(95, 6, txt="Tel:", ln=True)
+        pdf.cell(0, 6, txt="Nome:", ln=True)
+        pdf.cell(0, 6, txt="Ident.:", ln=True)
+        pdf.cell(0, 6, txt="Org. Em:", ln=True)
+        pdf.cell(0, 6, txt="End:", ln=True)
+        pdf.cell(0, 6, txt="Cidade:", ln=True)
+        pdf.cell(0, 6, txt="UF:", ln=True)
+        pdf.cell(0, 6, txt="Tel:", ln=True)
         
-        # Lado Direito - Fornecedor (Posicionado lateralmente)
-        pdf.set_xy(115, yr)
+        # Bloco Direito: Fornecedor [cite: 19-20]
+        pdf.set_xy(120, y_rodape)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(85, 7, txt="Identificação do Fornecedor", ln=True)
-        pdf.ln(18) # Espaço para assinatura
-        pdf.set_x(115)
+        pdf.cell(0, 7, txt="Identificação do Fornecedor", ln=True)
+        pdf.ln(15)
+        pdf.set_x(120)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(85, 6, txt="Assinatura do Farmacêutico", ln=True)
-        pdf.set_x(115)
-        pdf.cell(85, 6, txt="Data:", ln=True)
+        pdf.cell(0, 6, txt="Assinatura do Farmacêutico", ln=True)
+        pdf.set_x(120)
+        pdf.cell(0, 6, txt="Data:", ln=True)
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button(label="📥 Baixar PDF Final", data=pdf_bytes, file_name=f"receita_{paciente}.pdf", mime="application/pdf")
