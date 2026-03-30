@@ -168,10 +168,12 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_font("Arial", '', 8); pdf.set_x(ox + 35)
             pdf.cell(100, 4, "Médico Veterinário - CRMV-SC 2754", 0, 1, 'L')
             pdf.set_x(ox + 35); pdf.cell(100, 4, "Rua Isidoro Schilickmann, 93 - Braço do Norte - SC", 0, 1, 'L')
+            
             pdf.ln(10); pdf.set_font("Arial", 'B', 10); pdf.set_x(ox + 10)
             pdf.cell(130, 5, f"Paciente: {paciente}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(130, 5, f"Proprietário: {proprietario}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(130, 5, f"Espécie: {especie_sel}", 0, 1)
+            
             pdf.ln(3); pdf.set_font("Arial", 'B', 10); pdf.set_x(ox + 10)
             pdf.cell(130, 6, "PRESCRIÇÃO:", 0, 1)
             for it in st.session_state.lista:
@@ -179,6 +181,7 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
                 pdf.cell(130, 5, f"- {it['n']} --- {it['q']} {it['a']} ({it['v']})", 0, 1)
                 pdf.set_font("Arial", '', 9); pdf.set_x(ox + 15)
                 pdf.multi_cell(120, 4, f"{it['i']}")
+            
             pdf.set_y(148); pdf.set_x(ox + 10)
             pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
             pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
@@ -186,7 +189,7 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
             
-            # --- RODAPÉ AJUSTADO ---
+            # --- RODAPÉ SEM PONTILHADOS ---
             ry = 162
             pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
@@ -194,15 +197,11 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Ident./CPF: {c_ident}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"End: {c_end}", 0, 1)
             
-            # Linha da Cidade e UF com espaço para caneta
+            # Linha da Cidade e UF limpa
             pdf.set_x(ox + 10)
-            # Se a cidade estiver vazia, coloca pontilhado para caneta
-            txt_cid = f"Cidade: {c_cid}" if c_cid else "Cidade: ......................................."
-            pdf.cell(50, 4, txt_cid, 0, 0)
-            
-            pdf.set_x(ox + 65) 
-            txt_uf = f"UF: {c_uf}" if c_uf else "UF: ......."
-            pdf.cell(20, 4, txt_uf, 0, 1)
+            pdf.cell(50, 4, f"Cidade: {c_cid}", 0, 0)
+            pdf.set_x(ox + 70) # Espaço generoso para preenchimento manual da cidade
+            pdf.cell(20, 4, f"UF: {c_uf}", 0, 1)
             
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Tel: {c_tel}", 0, 1)
             
