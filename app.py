@@ -73,6 +73,7 @@ with st.expander("📂 MEUS MODELOS FAVORITOS", expanded=True):
                 st.session_state["c_ident_val"] = dados_c.get("ident", "")
                 st.session_state["c_end_val"] = dados_c.get("end", "")
                 st.session_state["c_cid_val"] = dados_c.get("cid", "")
+                st.session_state["c_uf_val"] = dados_c.get("uf", "")
                 st.session_state["c_tel_val"] = dados_c.get("tel", "")
                 
                 st.success(f"✅ Modelo '{selecionado}' carregado!")
@@ -95,9 +96,10 @@ with st.expander("👤 Dados do Comprador (Rodapé)", expanded=False):
     c_nome = st.text_input("Nome do Comprador:", value=st.session_state.get("c_nome_val", ""))
     c_ident = st.text_input("Identidade/CPF:", value=st.session_state.get("c_ident_val", ""))
     c_end = st.text_input("Endereço:", value=st.session_state.get("c_end_val", ""))
-    col_c1, col_c2 = st.columns(2)
+    col_c1, col_c2, col_c3 = st.columns([2, 1, 1])
     c_cid = col_c1.text_input("Cidade:", value=st.session_state.get("c_cid_val", ""))
-    c_tel = col_c2.text_input("Telefone:", value=st.session_state.get("c_tel_val", ""))
+    c_uf = col_c2.text_input("UF:", value=st.session_state.get("c_uf_val", ""), max_chars=2)
+    c_tel = col_c3.text_input("Telefone:", value=st.session_state.get("c_tel_val", ""))
 
 data_hoje = date.today().strftime("%d/%m/%Y")
 st.write("---")
@@ -145,7 +147,7 @@ if st.session_state.lista:
             salvar_favorito(nome_fav, {
                 "paciente": paciente, "proprietario": proprietario,
                 "medicamentos": st.session_state.lista,
-                "dados_comprador": {"nome": c_nome, "ident": c_ident, "end": c_end, "cid": c_cid, "tel": c_tel}
+                "dados_comprador": {"nome": c_nome, "ident": c_ident, "end": c_end, "cid": c_cid, "uf": c_uf, "tel": c_tel}
             })
             st.success("Modelo salvo!")
             st.rerun()
@@ -184,7 +186,7 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
             
-            # --- RODAPÉ COM ESPAÇO AJUSTADO ---
+            # --- RODAPÉ AJUSTADO ---
             ry = 162
             pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
@@ -192,11 +194,15 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Ident./CPF: {c_ident}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"End: {c_end}", 0, 1)
             
-            # Linha da Cidade com UF deslocada para a direita
+            # Linha da Cidade e UF com espaço para caneta
             pdf.set_x(ox + 10)
-            pdf.cell(40, 4, f"Cidade: {c_cid}", 0, 0) # Espaço para o nome da cidade
-            pdf.set_x(ox + 65) # Pula para 65mm para dar espaço manual
-            pdf.cell(20, 4, "UF: SC", 0, 1)
+            # Se a cidade estiver vazia, coloca pontilhado para caneta
+            txt_cid = f"Cidade: {c_cid}" if c_cid else "Cidade: ......................................."
+            pdf.cell(50, 4, txt_cid, 0, 0)
+            
+            pdf.set_x(ox + 65) 
+            txt_uf = f"UF: {c_uf}" if c_uf else "UF: ......."
+            pdf.cell(20, 4, txt_uf, 0, 1)
             
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Tel: {c_tel}", 0, 1)
             
