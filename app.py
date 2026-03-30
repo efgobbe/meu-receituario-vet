@@ -10,14 +10,15 @@ st.set_page_config(page_title="Sistema Dr. Eliéser", layout="wide")
 # --- TÍTULO CENTRALIZADO ---
 st.markdown("<h1 style='text-align: center;'>📋 Receituário Médico Veterinário</h1>", unsafe_allow_html=True)
 
-# --- SISTEMA DE FAVORITOS ---
+# --- FUNÇÕES DE ARQUIVO ---
 FAVORITOS_FILE = "favoritos.json"
 
 def carregar_favoritos():
     if os.path.exists(FAVORITOS_FILE):
         try:
             with open(FAVORITOS_FILE, "r") as f:
-                return json.load(f)
+                content = f.read()
+                return json.loads(content) if content else {}
         except: return {}
     return {}
 
@@ -25,16 +26,16 @@ def salvar_favorito(nome, dados_completos):
     favs = carregar_favoritos()
     favs[nome] = dados_completos
     with open(FAVORITOS_FILE, "w") as f:
-        json.dump(favs, f)
+        json.dump(favs, f, indent=4)
 
 def excluir_favorito(nome):
     favs = carregar_favoritos()
     if nome in favs:
         del favs[nome]
         with open(FAVORITOS_FILE, "w") as f:
-            json.dump(favs, f)
+            json.dump(favs, f, indent=4)
 
-# Inicialização de estados
+# Inicialização de estados de sessão
 if 'lista' not in st.session_state: st.session_state.lista = []
 if 'comprador' not in st.session_state: st.session_state.comprador = {}
 
@@ -45,32 +46,38 @@ if st.button("✨ NOVA RECEITA"):
     st.rerun()
 
 # --- 2. SEÇÃO FAVORITOS ---
+st.write("---")
 favoritos = carregar_favoritos()
-with st.expander("📂 FAVORITOS (Modelos Salvos)", expanded=False):
+with st.expander("📂 MEUS MODELOS FAVORITOS", expanded=False):
     if favoritos:
-        selecionado = st.selectbox("Escolha um modelo:", [""] + list(favoritos.keys()), key="fav_top")
+        # Usamos um índice para resetar o selectbox se necessário
+        lista_nomes = [""] + list(favoritos.keys())
+        selecionado = st.selectbox("Escolha um modelo para carregar:", lista_nomes, key="select_fav")
+        
         col1, col2 = st.columns(2)
-        if selecionado != "":
-            if col1.button("📥 Carregar Modelo"):
+        if selecionado:
+            if col1.button("📥 CARREGAR ESTE MODELO"):
                 dados = favoritos[selecionado]
                 st.session_state.lista = dados.get("medicamentos", [])
                 st.session_state.comprador = dados.get("dados_comprador", {})
-                st.success(f"✅ '{selecionado}' carregado!")
+                st.success(f"✅ Modelo '{selecionado}' aplicado!")
                 st.rerun()
-            if col2.button("🗑️ Excluir Modelo"):
+            
+            if col2.button("🗑️ EXCLUIR ESTE MODELO"):
                 excluir_favorito(selecionado)
+                st.success("Modelo removido.")
                 st.rerun()
     else:
-        st.info("Nenhum modelo salvo.")
+        st.info("Você ainda não tem modelos salvos. Monte uma receita abaixo e salve para aparecer aqui.")
 
 # --- 3. IDENTIFICAÇÃO DO PACIENTE ---
 st.subheader("🐾 Identificação do Animal")
 col_p1, col_p2 = st.columns(2)
-paciente = col_p1.text_input("Paciente:", value=st.session_state.get('paciente_val', ""))
-proprietario = col_p2.text_input("Proprietário:")
+paciente = col_p1.text_input("Paciente:", key="input_paciente")
+proprietario = col_p2.text_input("Proprietário:", key="input_prop")
 especie_sel = st.selectbox("Espécie:", ["Canina", "Felina", "Equina", "Bovina", "Ovina", "Caprina", "Suína", "Outra"])
 
-# --- 4. IDENTIFICAÇÃO DO COMPRADOR (NOVIDADE) ---
+# --- 4. IDENTIFICAÇÃO DO COMPRADOR ---
 with st.expander("👤 Dados do Comprador (Rodapé do PDF)", expanded=False):
     c_nome = st.text_input("Nome do Comprador:", value=st.session_state.comprador.get("nome", ""))
     c_ident = st.text_input("Identidade/CPF:", value=st.session_state.comprador.get("ident", ""))
@@ -78,14 +85,12 @@ with st.expander("👤 Dados do Comprador (Rodapé do PDF)", expanded=False):
     col_c1, col_c2 = st.columns(2)
     c_cid = col_c1.text_input("Cidade:", value=st.session_state.comprador.get("cid", ""))
     c_tel = col_c2.text_input("Telefone:", value=st.session_state.comprador.get("tel", ""))
-    
-    # Atualiza o estado para salvar em favoritos
     st.session_state.comprador = {"nome": c_nome, "ident": c_ident, "end": c_end, "cid": c_cid, "tel": c_tel}
 
 data_hoje = date.today().strftime("%d/%m/%Y")
 st.write("---")
 
-# --- 5. PRESCRIÇÃO ---
+# --- 5. FORMULÁRIO DE MEDICAMENTOS ---
 with st.form("f_med", clear_on_submit=True):
     col_v, col_m = st.columns([1, 2])
     via_sel = col_v.selectbox("Via", ["Uso Oral", "Uso Tópico", "Uso Injetável", "Uso Otológico", "Uso Ocular"])
@@ -95,38 +100,44 @@ with st.form("f_med", clear_on_submit=True):
     q_in = col_q.number_input("Quantidade", min_value=1, value=1)
     apres_in = col_a.selectbox("Apresentação", ["Cx", "Fr", "Cp", "Amp", "Bisn", "Env", "Tb", "Un", "Seringa", "Lata"])
     
-    i_in = st.text_area("Instruções")
+    i_in = st.text_area("Instruções de Uso")
     
     if st.form_submit_button("➕ Adicionar à Lista"):
         if med_in and i_in:
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
             st.rerun()
 
-# --- 6. LISTA ATUAL E SALVAMENTO ---
+# --- 6. EXIBIÇÃO DA LISTA E SALVAMENTO ---
 if st.session_state.lista:
-    st.subheader("Itens na Receita:")
+    st.subheader("Itens na Receita Atual:")
     for idx, it in enumerate(st.session_state.lista):
-        st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
+        st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']} ({it['v']})")
 
-    if st.button("🗑️ Limpar Lista"):
+    if st.button("🗑️ Limpar Medicamentos"):
         st.session_state.lista = []
         st.rerun()
 
-    nome_fav = st.text_input("Nomear modelo para salvar (Salva medicamentos + Comprador):")
-    if st.button("⭐ SALVAR NOS FAVORITOS"):
+    st.write("---")
+    st.subheader("⭐ Salvar como Modelo")
+    nome_fav = st.text_input("Dê um nome para este favorito (ex: Protocolo Otite):")
+    if st.button("SALVAR NOS MEUS FAVORITOS"):
         if nome_fav:
             dados_para_salvar = {
                 "medicamentos": st.session_state.lista,
                 "dados_comprador": st.session_state.comprador
             }
             salvar_favorito(nome_fav, dados_para_salvar)
-            st.success(f"✅ Modelo '{nome_fav}' salvo com sucesso!")
+            st.success(f"✅ Sucesso! O modelo '{nome_fav}' agora aparecerá na lista de favoritos no topo.")
+            # O st.rerun() força a atualização do selectbox lá em cima
+            st.rerun()
+        else:
+            st.error("Por favor, digite um nome para o modelo.")
 
-# --- 7. GERAÇÃO DO PDF ---
+# --- 7. BOTÃO DE IMPRESSÃO ---
 st.write("---")
 if st.button("🖨️ IMPRIMIR RECEITA"):
     if not st.session_state.lista:
-        st.error("Adicione medicamentos primeiro.")
+        st.error("Adicione ao menos um medicamento.")
     else:
         pdf = FPDF(orientation='L', unit='mm', format='A4')
         pdf.add_page()
@@ -154,7 +165,6 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
                 pdf.set_font("Arial", '', 9); pdf.set_x(ox + 15)
                 pdf.multi_cell(120, 4, f"{it['i']}")
             
-            # Rodapé e Assinatura
             pdf.set_y(148); pdf.set_x(ox + 10)
             pdf.cell(130, 0, "_________________________________________", 0, 1, 'C')
             pdf.ln(2); pdf.set_font("Arial", 'B', 9); pdf.set_x(ox + 10)
@@ -162,7 +172,6 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
 
-            # IDENTIFICAÇÃO DO COMPRADOR PREENCHIDA NO PDF
             ry = 162
             pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
@@ -178,5 +187,4 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
 
         pdf.line(148.5, 5, 148.5, 205)
         out = pdf.output(dest='S').encode('latin-1', 'ignore')
-        
         st.download_button(label="📥 CLIQUE PARA ABRIR E IMPRIMIR", data=out, file_name=f"Receita_{paciente}.pdf", mime="application/pdf")
