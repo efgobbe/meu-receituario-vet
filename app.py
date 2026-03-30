@@ -54,11 +54,9 @@ with st.expander("📂 MEUS MODELOS FAVORITOS", expanded=True):
         if selecionado:
             if col1.button("📥 CARREGAR ESTE MODELO"):
                 dados = favoritos[selecionado]
-                # Carregar Lista de Medicamentos
                 medicamentos = dados.get("medicamentos", [])
                 st.session_state.lista = medicamentos
                 
-                # Preencher campos de edição com o 1º medicamento da lista (se houver)
                 if medicamentos:
                     pri = medicamentos[0]
                     st.session_state["med_val"] = pri.get("n", "")
@@ -67,11 +65,9 @@ with st.expander("📂 MEUS MODELOS FAVORITOS", expanded=True):
                     st.session_state["apres_val"] = pri.get("a", "Cx")
                     st.session_state["inst_val"] = pri.get("i", "")
                 
-                # Carregar Dados do Paciente
                 st.session_state["paciente_val"] = dados.get("paciente", "")
                 st.session_state["prop_val"] = dados.get("proprietario", "")
                 
-                # Carregar Dados do Comprador
                 dados_c = dados.get("dados_comprador", {})
                 st.session_state["c_nome_val"] = dados_c.get("nome", "")
                 st.session_state["c_ident_val"] = dados_c.get("ident", "")
@@ -79,7 +75,7 @@ with st.expander("📂 MEUS MODELOS FAVORITOS", expanded=True):
                 st.session_state["c_cid_val"] = dados_c.get("cid", "")
                 st.session_state["c_tel_val"] = dados_c.get("tel", "")
                 
-                st.success(f"✅ Modelo '{selecionado}' carregado com sucesso!")
+                st.success(f"✅ Modelo '{selecionado}' carregado!")
                 st.rerun()
             
             if col2.button("🗑️ EXCLUIR ESTE MODELO"):
@@ -106,16 +102,13 @@ with st.expander("👤 Dados do Comprador (Rodapé)", expanded=False):
 data_hoje = date.today().strftime("%d/%m/%Y")
 st.write("---")
 
-# --- 4. FORMULÁRIO DE MEDICAMENTOS (COM CARREGAMENTO) ---
+# --- 4. FORMULÁRIO DE MEDICAMENTOS ---
 st.subheader("💊 Prescrição")
 with st.form("f_med", clear_on_submit=True):
     col_v, col_m = st.columns([1, 2])
-    
-    # Listas para indexação do selectbox
     vias = ["Uso Oral", "Uso Tópico", "Uso Injetável", "Uso Otológico", "Uso Ocular"]
     apres = ["Cx", "Fr", "Cp", "Amp", "Bisn", "Env", "Tb", "Un", "Seringa", "Lata"]
     
-    # Recupera valores do estado para preencher o form
     v_idx = vias.index(st.session_state.get("via_val", "Uso Oral"))
     a_idx = apres.index(st.session_state.get("apres_val", "Cx"))
     
@@ -128,10 +121,9 @@ with st.form("f_med", clear_on_submit=True):
     
     i_in = st.text_area("Instruções de Uso", value=st.session_state.get("inst_val", ""))
     
-    if st.form_submit_button("➕ Adicionar/Atualizar na Lista"):
+    if st.form_submit_button("➕ Adicionar à Lista"):
         if med_in and i_in:
             st.session_state.lista.append({"n": med_in, "q": q_in, "a": apres_in, "v": via_sel, "i": i_in})
-            # Limpa os campos de preenchimento após adicionar
             st.session_state["med_val"] = ""
             st.session_state["inst_val"] = ""
             st.rerun()
@@ -140,29 +132,29 @@ with st.form("f_med", clear_on_submit=True):
 if st.session_state.lista:
     st.subheader("Itens na Receita Atual:")
     for idx, it in enumerate(st.session_state.lista):
-        st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']} ({it['v']})")
+        st.write(f"**{idx+1}.** {it['n']} - {it['q']} {it['a']}")
     
-    if st.button("🗑️ Limpar Lista de Medicamentos"):
+    if st.button("🗑️ Limpar Lista"):
         st.session_state.lista = []
         st.rerun()
 
     st.write("---")
     nome_fav = st.text_input("Nome do novo modelo favorito:")
-    if st.button("⭐ SALVAR TUDO NOS FAVORITOS"):
+    if st.button("⭐ SALVAR NOS FAVORITOS"):
         if nome_fav:
             salvar_favorito(nome_fav, {
                 "paciente": paciente, "proprietario": proprietario,
                 "medicamentos": st.session_state.lista,
                 "dados_comprador": {"nome": c_nome, "ident": c_ident, "end": c_end, "cid": c_cid, "tel": c_tel}
             })
-            st.success("Modelo completo salvo nos favoritos!")
+            st.success("Modelo salvo!")
             st.rerun()
 
 # --- 6. IMPRESSÃO ---
 st.write("---")
 if st.button("🖨️ IMPRIMIR RECEITA"):
     if not st.session_state.lista:
-        st.error("Adicione medicamentos primeiro.")
+        st.error("Adicione medicamentos.")
     else:
         pdf = FPDF(orientation='L', unit='mm', format='A4')
         pdf.add_page()
@@ -191,17 +183,27 @@ if st.button("🖨️ IMPRIMIR RECEITA"):
             pdf.cell(130, 4, "Dr. Eliéser Ferreira Gobbe", 0, 1, 'C')
             pdf.set_font("Arial", '', 8); pdf.set_x(ox + 10)
             pdf.cell(130, 4, f"CRMV-SC 2754  |  Data: {data_hoje}", 0, 1, 'C')
+            
+            # --- RODAPÉ COM ESPAÇO AJUSTADO ---
             ry = 162
             pdf.set_xy(ox + 10, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Identificação do Comprador", 0, 1)
             pdf.set_font("Arial", '', 8)
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Nome: {c_nome}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Ident./CPF: {c_ident}", 0, 1)
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"End: {c_end}", 0, 1)
-            pdf.set_x(ox + 10); pdf.cell(65, 4, f"Cidade: {c_cid}  UF: SC", 0, 1)
+            
+            # Linha da Cidade com UF deslocada para a direita
+            pdf.set_x(ox + 10)
+            pdf.cell(40, 4, f"Cidade: {c_cid}", 0, 0) # Espaço para o nome da cidade
+            pdf.set_x(ox + 65) # Pula para 65mm para dar espaço manual
+            pdf.cell(20, 4, "UF: SC", 0, 1)
+            
             pdf.set_x(ox + 10); pdf.cell(65, 4, f"Tel: {c_tel}", 0, 1)
+            
             pdf.set_xy(ox + 85, ry); pdf.set_font("Arial", 'B', 8); pdf.cell(55, 4, "Identificação do Fornecedor", 0, 1, 'R')
             pdf.set_xy(ox + 85, ry + 22); pdf.set_font("Arial", '', 8); pdf.cell(55, 4, "Assinatura do Farmacêutico", 0, 1, 'R')
             pdf.set_x(ox + 85); pdf.cell(55, 4, "Data: ___/___/___", 0, 1, 'R')
+            
         pdf.line(148.5, 5, 148.5, 205)
         out = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button(label="📥 CLIQUE PARA ABRIR E IMPRIMIR", data=out, file_name=f"Receita_{paciente}.pdf", mime="application/pdf")
